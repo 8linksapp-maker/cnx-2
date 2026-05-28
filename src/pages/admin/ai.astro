@@ -1,0 +1,85 @@
+---
+export const prerender = false;
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AIPostGenerator from '../../plugins/ai-generator/AIPostGenerator';
+import SettingsAI from '../../plugins/ai-generator/SettingsAI';
+import { readData } from '../../lib/readData';
+
+const authorsRaw = readData<any[]>('authors.json', []);
+const categoriesRaw = readData<any[]>('categories.json', []);
+const pluginsConfig = readData<any>('pluginsConfig.json', {});
+
+const authors = authorsRaw.map((a: any) => ({ slug: a.id || a.slug || a.name, name: a.name }));
+
+// Suporta tanto string[] legado quanto {name,slug}[] novo
+const categories = categoriesRaw.map((c: any) =>
+  typeof c === 'string' ? { slug: c, name: c } : { slug: c.slug || c.name, name: c.name }
+);
+
+const hasApiKey = !!(pluginsConfig?.ai?.apiKey);
+const defaultTab = hasApiKey ? 'generate' : 'settings';
+---
+<AdminLayout title="Gerar com IA" activeSection="ai">
+    <div class="mb-8">
+        <h1 class="text-xl font-semibold text-ink">Gerar artigo com IA</h1>
+        <p class="text-sm text-ink-muted mt-1">
+            Escreva o título, monte a estrutura e deixe a IA criar o artigo completo.
+        </p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-6">
+        <div role="tablist" aria-label="Abas do gerador de IA" class="flex gap-1 bg-elev rounded-md p-1 w-fit">
+            <button
+                id="tab-generate"
+                role="tab"
+                aria-selected={defaultTab === 'generate'}
+                aria-controls="panel-generate"
+                onclick="showTab('generate')"
+                class={`px-4 py-2 min-h-[44px] rounded text-sm font-semibold transition-all ${defaultTab === 'generate' ? 'bg-surface text-primary shadow-sm' : 'text-ink-muted hover:text-ink'}`}
+            >
+                Criar artigo
+            </button>
+            <button
+                id="tab-settings"
+                role="tab"
+                aria-selected={defaultTab === 'settings'}
+                aria-controls="panel-settings"
+                onclick="showTab('settings')"
+                class={`px-4 py-2 min-h-[44px] rounded text-sm font-semibold transition-all ${defaultTab === 'settings' ? 'bg-surface text-primary shadow-sm' : 'text-ink-muted hover:text-ink'}`}
+            >
+                Configuração da IA{!hasApiKey && <span class="ml-1.5 w-2 h-2 bg-amber-500 rounded-full inline-block" aria-label="Não configurado"></span>}
+            </button>
+        </div>
+    </div>
+
+    <div id="panel-generate" role="tabpanel" aria-labelledby="tab-generate" class={defaultTab === 'generate' ? '' : 'hidden'}>
+        <AIPostGenerator client:load authors={authors} categories={categories} hasApiKey={hasApiKey} />
+    </div>
+    <div id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" class={defaultTab === 'settings' ? '' : 'hidden'}>
+        <SettingsAI client:load />
+    </div>
+</AdminLayout>
+
+<script is:inline>
+function showTab(tab) {
+    var panels = {
+        generate: document.getElementById('panel-generate'),
+        settings: document.getElementById('panel-settings'),
+    };
+    var tabs = {
+        generate: document.getElementById('tab-generate'),
+        settings: document.getElementById('tab-settings'),
+    };
+    var activeClass   = 'px-4 py-2 min-h-[44px] rounded text-sm font-semibold transition-all bg-surface text-primary shadow-sm';
+    var inactiveClass = 'px-4 py-2 min-h-[44px] rounded text-sm font-semibold transition-all text-ink-muted hover:text-ink';
+    Object.keys(panels).forEach(function(key) {
+        var isActive = key === tab;
+        if (panels[key]) panels[key].classList.toggle('hidden', !isActive);
+        if (tabs[key]) {
+            tabs[key].className = isActive ? activeClass : inactiveClass;
+            tabs[key].setAttribute('aria-selected', String(isActive));
+        }
+    });
+}
+</script>

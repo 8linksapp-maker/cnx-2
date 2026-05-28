@@ -1,0 +1,52 @@
+---
+import { colorForCategory } from '../../lib/categoryColors';
+
+interface Props {
+  post: any;
+  index?: number;
+}
+
+const { post, index = 0 } = Astro.props;
+
+const data = post.data ?? post;
+const slug = post.slug ?? post.id;
+const url = `/${slug}`;
+const title = data.title || 'Sem título';
+const excerpt = data.description || data.excerpt || '';
+const category = data.category || 'Geral';
+const date = data.pubDate || data.date || data.publishedAt;
+
+const catColor = colorForCategory(category, index);
+
+function fmtDate(d: any): string {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '';
+  return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' }).replace('.', '');
+}
+
+const num = String(index + 1).padStart(2, '0');
+---
+
+<a href={url} class={`color-block color-block-md bg-cat-${catColor} group`}>
+  <span class="color-block-num">{num}</span>
+  <div>
+    <p class="mono uppercase opacity-80 mb-3">
+      {category} · {fmtDate(date)}
+    </p>
+    <h2 class="font-display text-2xl md:text-3xl font-normal leading-[1.05] tracking-tight max-w-md">
+      {title}
+    </h2>
+  </div>
+  <div class="flex items-end justify-between gap-4 mt-6">
+    {excerpt && (
+      <p class="text-sm md:text-base leading-relaxed max-w-xs opacity-85 line-clamp-2">
+        {excerpt}
+      </p>
+    )}
+    <span class="mono uppercase shrink-0 inline-flex items-center gap-2 border-b border-current pb-1 group-hover:gap-3 transition-all self-end">
+      abrir
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </span>
+  </div>
+</a>

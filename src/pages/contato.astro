@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { readData } from '../lib/readData';
+
+const siteConfig = readData('siteConfig.json');
+const contatoData = readData('contato.json', {});
+const contact = siteConfig.contact || {};
+---
+
+<BaseLayout title="Contato" description={`Fale com ${siteConfig.name}`}>
+  <section class="border-b border-rule">
+    <div class="container-x pt-16 md:pt-20 pb-12">
+      <p class="mono uppercase text-ink-faint mb-5">contato</p>
+      <h1 class="font-display text-3xl md:text-4xl font-normal tracking-tight text-ink leading-[1.1] mb-6 max-w-3xl">
+        Vamos conversar.
+      </h1>
+      <p class="text-xl text-ink-muted leading-relaxed max-w-2xl">
+        {(contatoData as any).intro || 'Tem ideia, parceria ou dúvida? Manda mensagem que respondemos.'}
+      </p>
+    </div>
+  </section>
+
+  <div class="container-x py-14 md:py-20">
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-12 md:gap-20">
+      <div class="space-y-8">
+        {contact.email && (
+          <div>
+            <div class="mono uppercase text-ink-faint mb-2">email</div>
+            <a href={`mailto:${contact.email}`} class="text-lg font-medium text-ink hover:text-primary transition-colors">{contact.email}</a>
+          </div>
+        )}
+        {contact.phone && (
+          <div>
+            <div class="mono uppercase text-ink-faint mb-2">telefone</div>
+            <a href={`tel:${contact.phone.replace(/\D/g, '')}`} class="text-lg font-medium text-ink hover:text-primary transition-colors">{contact.phone}</a>
+          </div>
+        )}
+        {contact.address && (
+          <div>
+            <div class="mono uppercase text-ink-faint mb-2">endereço</div>
+            <p class="text-base text-ink leading-relaxed">{contact.address}</p>
+          </div>
+        )}
+      </div>
+
+      <form class="space-y-6" action="/api/subscribe" method="POST">
+        <div>
+          <label class="mono uppercase text-ink-faint block mb-2" for="name">nome</label>
+          <input type="text" id="name" name="name" required class="w-full bg-transparent border-b border-rule focus:border-ink py-2 text-ink outline-none transition-colors" />
+        </div>
+        <div>
+          <label class="mono uppercase text-ink-faint block mb-2" for="email">email</label>
+          <input type="email" id="email" name="email" required class="w-full bg-transparent border-b border-rule focus:border-ink py-2 text-ink outline-none transition-colors" />
+        </div>
+        <div>
+          <label class="mono uppercase text-ink-faint block mb-2" for="message">mensagem</label>
+          <textarea id="message" name="message" rows="5" required class="w-full bg-transparent border-b border-rule focus:border-ink py-2 text-ink outline-none transition-colors resize-y"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          enviar
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</BaseLayout>

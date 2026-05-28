@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { readData } from '../lib/readData';
+
+const siteConfig = readData('siteConfig.json');
+const privacy = readData('privacy.json', {}) as any;
+
+const sections: Array<{ title: string; text: string }> = Array.isArray(privacy?.content)
+  ? privacy.content
+  : [];
+---
+
+<BaseLayout title={privacy?.title || 'Política de Privacidade'} description={`Política de privacidade do ${siteConfig.name}`}>
+  <section class="border-b border-rule">
+    <div class="container-x pt-16 md:pt-20 pb-10">
+      <p class="mono uppercase text-ink-faint mb-5">legal</p>
+      <h1 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight text-ink leading-[1.05] mb-3">
+        {privacy?.title || 'Política de Privacidade'}
+      </h1>
+      {privacy?.lastUpdated && (
+        <p class="mono text-ink-faint">
+          atualizado em {privacy.lastUpdated}
+        </p>
+      )}
+    </div>
+  </section>
+
+  <div class="container-x py-14 md:py-20">
+    <div class="max-w-prose-lg">
+      {sections.length === 0 ? (
+        <p class="text-ink-muted">
+          Edite essa página no admin em <a href="/admin/legal" class="underline underline-offset-4 hover:text-ink">/admin/legal</a>.
+        </p>
+      ) : (
+        <div class="space-y-10">
+          {sections.map((s) => (
+            <section>
+              <h2 class="font-display text-xl md:text-2xl font-bold text-ink leading-tight mb-3">
+                {s.title}
+              </h2>
+              <p class="text-ink-muted leading-relaxed text-base whitespace-pre-line">
+                {s.text}
+              </p>
+            </section>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,83 @@
+---
+import { readData } from '../../lib/readData';
+import { normalizeCategories, collectOrphanCategories } from '../../lib/categorySlug';
+import { getCollection } from 'astro:content';
+
+const siteConfig = readData('siteConfig.json');
+const menuItems: any[] = readData('menu.json', { items: [] }).items || [];
+
+const posts = await getCollection('blog');
+const categoriesData = readData('categories.json', []);
+const registered = normalizeCategories(categoriesData);
+const postCats = [...new Set(posts.map(p => p.data.category).filter(Boolean))];
+const orphans = collectOrphanCategories(postCats, registered);
+const allCategories = (registered.length > 0 ? [...registered, ...orphans] : orphans).slice(0, 6);
+
+const year = new Date().getFullYear();
+
+const socials: Array<[string, string, string]> = [
+  ['instagram', 'instagram', siteConfig.social?.instagram],
+  ['twitter', 'twitter / x', siteConfig.social?.twitter],
+  ['facebook', 'facebook', siteConfig.social?.facebook],
+  ['youtube', 'youtube', siteConfig.social?.youtube],
+].filter(([_, __, href]: any) => href) as any;
+---
+
+<footer class="border-t border-rule mt-24">
+  <div class="container-x py-14 md:py-20">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-14">
+      <div class="md:col-span-5">
+        <a href="/" class="font-display text-2xl font-bold text-ink tracking-tight no-underline inline-block mb-3">
+          {siteConfig.name}
+        </a>
+        <p class="text-sm text-ink-muted leading-relaxed max-w-sm">
+          {siteConfig.description}
+        </p>
+      </div>
+
+      <div class="md:col-span-3">
+        <div class="mono uppercase text-ink-faint mb-4 pb-3 border-b border-rule">navegação</div>
+        <ul class="space-y-2.5 text-sm">
+          {menuItems.map((item: any) => (
+            <li><a href={item.href} class="text-ink-muted hover:text-ink transition-colors">{item.label}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      {allCategories.length > 0 && (
+        <div class="md:col-span-2">
+          <div class="mono uppercase text-ink-faint mb-4 pb-3 border-b border-rule">tópicos</div>
+          <ul class="space-y-2.5 text-sm">
+            {allCategories.map((cat) => (
+              <li><a href={`/categoria/${cat.slug}`} class="text-ink-muted hover:text-ink transition-colors">{cat.name}</a></li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {socials.length > 0 && (
+        <div class="md:col-span-2">
+          <div class="mono uppercase text-ink-faint mb-4 pb-3 border-b border-rule">social</div>
+          <ul class="space-y-2.5 text-sm">
+            {socials.map(([_, label, href]: any) => (
+              <li>
+                <a href={href} target="_blank" rel="noopener" class="text-ink-muted hover:text-ink transition-colors inline-flex items-center gap-1.5">
+                  {label}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+
+    <div class="border-t border-rule pt-6 flex items-center justify-between flex-wrap gap-3 text-xs">
+      <span class="mono text-ink-faint">© {year} {siteConfig.name}</span>
+      <div class="flex gap-5">
+        <a href="/privacidade" class="text-ink-faint hover:text-ink transition-colors">privacidade</a>
+        <a href="/termos" class="text-ink-faint hover:text-ink transition-colors">termos</a>
+      </div>
+    </div>
+  </div>
+</footer>

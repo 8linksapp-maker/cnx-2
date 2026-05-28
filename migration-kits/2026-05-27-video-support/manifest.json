@@ -1,0 +1,36 @@
+{
+  "id": "video-support",
+  "date": "2026-05-27",
+  "summary": "Suporte estrutural a vídeos: frontmatter videoUrl + shortcode [[video:URL]] + VideoObject JSON-LD",
+  "applicable_to": "msia-scaffold-based Astro sites com src/content/config.ts",
+  "risk_level": "low",
+  "additive_only": false,
+  "modifies_files": ["src/content/config.ts"],
+  "adds_files": [
+    "src/lib/videoEmbed.ts",
+    "src/components/ui/PostVideo.astro",
+    "src/lib/shortcodes.ts (apenas se ausente — versão minimal)"
+  ],
+  "breaking_changes": [],
+  "automated": "partial",
+  "idempotent": true,
+  "entrypoint": "apply.mjs",
+  "entrypoint_args": "<repoPath>",
+  "exit_codes": {
+    "0": "success (applied or already applied)",
+    "1": "expected failure",
+    "2": "usage error"
+  },
+  "validation": ["bun run build returns exit 0"],
+  "rollback": "git revert <commit>",
+  "commit_message_template": "feat(video): suporte a vídeos em posts via frontmatter + shortcode\n\n- src/lib/videoEmbed.ts: parser YouTube/Vimeo/iframe/mp4\n- src/components/ui/PostVideo.astro: embed responsivo 16:9 com lite mode + JSON-LD\n- src/lib/shortcodes.ts: [[video:URL]] inline no body (minimal se ausente)\n- src/content/config.ts: campos videoUrl + videoPosition no schema\n\nvia migration-kit/2026-05-27-video-support",
+  "manual_steps_documented": [
+    "Page renderers (pages/[slug].astro + pages/blog/[slug].astro): import PostVideo + parseVideoUrl, setup das vars, render condicional. Ver README seção Tier B.1",
+    "Render do shortcode no body: chamar renderShortcodes(post.body) antes de servir. Ver README seção Tier B.2 (geralmente já existe em templates com produto/comparador)",
+    "PostEditor UI: modal Inserir Vídeo no admin. Não obrigatório — aluno pode digitar [[video:URL]] direto no Quill. Ver README seção Tier B.3"
+  ],
+  "known_caveats": [
+    "Se aluno tem src/lib/shortcodes.ts customizado SEM suporte a video, kit registra como manual-merge-required e NÃO sobrescreve",
+    "Page renderers com layout MUITO customizado podem não aceitar o snippet Tier B sem ajustes — testar build local antes de commit"
+  ]
+}

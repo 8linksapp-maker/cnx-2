@@ -1,0 +1,106 @@
+---
+import '../styles/global.css';
+import { readData } from '../lib/readData';
+import HeadPlugins from '../plugins/_slots/HeadPlugins.astro';
+import BodyEndPlugins from '../plugins/_slots/BodyEndPlugins.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+
+const siteConfig = readData('siteConfig.json');
+const pluginsConfig = readData('pluginsConfig.json', {});
+const gscVerificationTag = (pluginsConfig as any)?.searchConsole?.verificationTag?.trim() || '';
+
+const primaryHex = siteConfig.theme?.primary || '#1c64c8';
+const fontDisplay = siteConfig.theme?.fontDisplay || 'Switzer';
+const fontBody = siteConfig.theme?.fontBody || 'Switzer';
+
+function hexToRgbTriplet(hex: string): string {
+  const h = hex.replace('#', '').trim();
+  if (h.length !== 6) return '28 100 200';
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `${r} ${g} ${b}`;
+}
+function soften(hex: string): string {
+  const h = hex.replace('#', '').trim();
+  if (h.length !== 6) return '228 235 247';
+  const r = Math.round(parseInt(h.substring(0, 2), 16) * 0.1 + 255 * 0.9);
+  const g = Math.round(parseInt(h.substring(2, 4), 16) * 0.1 + 255 * 0.9);
+  const b = Math.round(parseInt(h.substring(4, 6), 16) * 0.1 + 255 * 0.9);
+  return `${r} ${g} ${b}`;
+}
+
+const cssVars = `
+  --c-primary: ${hexToRgbTriplet(primaryHex)};
+  --c-primary-soft: ${soften(primaryHex)};
+  --font-display: '${fontDisplay}', system-ui, -apple-system, sans-serif;
+  --font-body: '${fontBody}', system-ui, -apple-system, sans-serif;
+`;
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  bodyClass?: string;
+}
+
+const {
+  title = siteConfig.name,
+  description = siteConfig.description,
+  image = '',
+  type = 'website',
+  bodyClass = '',
+} = Astro.props;
+
+const formattedTitle = title === siteConfig.name ? title : `${title} | ${siteConfig.name}`;
+const siteUrl = siteConfig.url || Astro.url.origin;
+const socialImage = image?.startsWith('http') ? image : image ? new URL(image, siteUrl).toString() : '';
+---
+
+<!DOCTYPE html>
+<html lang={siteConfig.language || 'pt-BR'} style={cssVars}>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{formattedTitle}</title>
+  <meta name="description" content={description} />
+  <link rel="icon" href={siteConfig.favicon || '/favicon.svg'} />
+
+  {gscVerificationTag && (
+    gscVerificationTag.startsWith('<')
+      ? <Fragment set:html={gscVerificationTag} />
+      : <meta name="google-site-verification" content={gscVerificationTag} />
+  )}
+
+  <meta property="og:type" content={type} />
+  <meta property="og:title" content={formattedTitle} />
+  <meta property="og:description" content={description} />
+  {socialImage && <meta property="og:image" content={socialImage} />}
+  <meta property="og:url" content={Astro.url} />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={formattedTitle} />
+  <meta name="twitter:description" content={description} />
+  {socialImage && <meta name="twitter:image" content={socialImage} />}
+
+  <HeadPlugins />
+</head>
+
+<body class={bodyClass}>
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-ink focus:text-bg focus:px-4 focus:py-2 focus:rounded focus:mono">
+    pular pro conteúdo
+  </a>
+
+  <Header />
+
+  <main id="main">
+    <slot />
+  </main>
+
+  <Footer />
+
+  <BodyEndPlugins />
+</body>
+</html>

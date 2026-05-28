@@ -1,0 +1,41 @@
+[
+  {
+    "id": "expert-1",
+    "name": "Nome do redator",
+    "role": "Redator",
+    "avatar": "",
+    "bio": "Bio curta do expert. Apresente a especialidade e o que ele cobre no blog em 1-2 frases.",
+    "social": {
+      "twitter": "",
+      "instagram": "",
+      "linkedin": "",
+      "website": ""
+    }
+  },
+  {
+    "id": "expert-2",
+    "name": "Outro especialista",
+    "role": "Editor",
+    "avatar": "",
+    "bio": "Bio curta do segundo membro da equipe. Edite em /admin/authors.",
+    "social": {
+      "twitter": "",
+      "instagram": "",
+      "linkedin": "",
+      "website": ""
+    }
+  },
+  {
+    "id": "expert-3",
+    "name": "Mais um expert",
+    "role": "Redator convidado",
+    "avatar": "",
+    "bio": "Bio curta do terceiro membro. Use o admin pra adicionar quantos quiser.",
+    "social": {
+      "twitter": "",
+      "instagram": "",
+      "linkedin": "",
+      "website": ""
+    }
+  }
+]

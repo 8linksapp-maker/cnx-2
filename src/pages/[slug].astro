@@ -1,0 +1,195 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostVideo from '../components/ui/PostVideo.astro';
+import { getCollection } from 'astro:content';
+import { readData } from '../lib/readData';
+import { colorForCategory } from '../lib/categoryColors';
+import { normalizeCategories, getCategorySlug } from '../lib/categorySlug';
+import { parseVideoUrl } from '../lib/videoEmbed';
+import { renderShortcodes, hasShortcodes } from '../lib/shortcodes';
+
+const allCategories = normalizeCategories(readData('categories.json', []));
+
+export async function getStaticPaths() {
+  const siteConfig = readData('siteConfig.json', {}) as any;
+  // Quando aluno escolheu prefixo /blog, esta rota nao gera (evita duplicacao com /blog/[slug]).
+  if (siteConfig?.postUrlPrefix === 'blog') return [];
+  const posts = await getCollection('blog');
+  return posts.map((post: any) => ({
+    params: { slug: post.slug ?? post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+const data = post.data;
+
+const siteConfig = readData('siteConfig.json');
+
+const catColor = colorForCategory(data.category);
+
+function fmtDate(d: any): string {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '';
+  return dt.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: '2-digit' });
+}
+
+const readingMinutes = (() => {
+  try {
+    const text = (post.body || '') as string;
+    const words = text.split(/\s+/).length;
+    return Math.max(1, Math.round(words / 200));
+  } catch { return 5; }
+})();
+
+// Próximos posts (mesma categoria, depois outros)
+const allPosts = await getCollection('blog');
+const otherPosts = allPosts.filter((p: any) => (p.slug ?? p.id) !== (post.slug ?? post.id));
+const related = otherPosts.slice(0, 3);
+
+const videoUrl = data.videoUrl || '';
+const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
+const hasValidVideo = videoInfo && videoInfo.provider !== 'unknown';
+const videoPosition = data.videoPosition || 'after-hero';
+
+// Processa shortcodes [[video:URL]] no body (e quaisquer outros suportados).
+// Só roda quando body já é HTML (Quill output); pra .md puro o Astro Content cuida.
+const rawBody = (post.body || '') as string;
+const isHtmlBody = /^\s*</.test(rawBody.trim());
+const processedHtml = isHtmlBody && hasShortcodes(rawBody) ? renderShortcodes(rawBody) : null;
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description || ''}
+  image={data.heroImage || data.cover || ''}
+  type="article"
+>
+  <article>
+    <!-- HERO BLOCK — cor da categoria dominante -->
+    <header class={`bg-cat-${catColor} relative overflow-hidden isolate`}>
+      <span class="color-block-num" style="bottom:-4rem;right:-2rem;font-size:clamp(16rem,40vw,32rem)">
+        {String(data.order || '#').padStart(2, '0')}
+      </span>
+
+      <div class="container-x relative z-10 pt-16 md:pt-24 pb-20 md:pb-28">
+        <nav class="mono opacity-75 mb-12" aria-label="Breadcrumb">
+          <a href="/" class="hover:opacity-100 transition-opacity">início</a>
+          <span class="mx-2 opacity-60">/</span>
+          {data.category && (
+            <>
+              <a href={`/categoria/${getCategorySlug(data.category, allCategories)}`} class="hover:opacity-100 transition-opacity uppercase">
+                {data.category}
+              </a>
+              <span class="mx-2 opacity-60">/</span>
+            </>
+          )}
+          <span class="opacity-100">leitura atual</span>
+        </nav>
+
+        <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.02] tracking-tight text-white max-w-4xl mb-8">
+          {data.title}
+        </h1>
+
+        {data.description && (
+          <p class="text-xl md:text-2xl leading-snug max-w-3xl text-white/85 mb-12">
+            {data.description}
+          </p>
+        )}
+
+        <div class="mono uppercase text-white/70 flex items-center gap-3 flex-wrap pt-6 border-t border-white/20">
+          <span>{fmtDate(data.pubDate || data.date)}</span>
+          <span class="opacity-50">·</span>
+          <span>{readingMinutes} min</span>
+          {data.author && (<><span class="opacity-50">·</span><span>por {data.author}</span></>)}
+        </div>
+      </div>
+    </header>
+
+    {hasValidVideo && videoPosition === 'hero' ? (
+      <div class="border-b border-rule">
+        <div class="container-x py-8">
+          <PostVideo
+            url={videoUrl}
+            title={data.title}
+            description={data.description}
+            uploadDate={(data.pubDate || data.date) instanceof Date ? (data.pubDate || data.date).toISOString() : String(data.pubDate || data.date || '')}
+            lite={true}
+          />
+        </div>
+      </div>
+    ) : (data.heroImage || data.cover || data.coverImage) ? (
+      <div class="border-b border-rule">
+        <div class="container-x py-8">
+          <img
+            src={data.heroImage || data.cover || data.coverImage}
+            alt=""
+            class="w-full aspect-[21/9] object-cover"
+            loading="eager"
+          />
+        </div>
+      </div>
+    ) : null}
+
+    {hasValidVideo && videoPosition === 'after-hero' && (
+      <div class="border-b border-rule">
+        <div class="container-x py-8">
+          <PostVideo
+            url={videoUrl}
+            title={data.title}
+            description={data.description}
+            uploadDate={(data.pubDate || data.date) instanceof Date ? (data.pubDate || data.date).toISOString() : String(data.pubDate || data.date || '')}
+            lite={true}
+          />
+        </div>
+      </div>
+    )}
+
+    <!-- CONTEÚDO DO POST -->
+    <div class="container-x py-16 md:py-24">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+        <div class="lg:col-span-8 lg:col-start-2">
+          <div class="prose-msia max-w-none">
+            {processedHtml ? (
+              <Fragment set:html={processedHtml} />
+            ) : (
+              <Content />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOCOS RELACIONADOS -->
+    {related.length > 0 && (
+      <section class="border-t border-rule">
+        <div class="container-x py-14 md:py-20">
+          <p class="mono uppercase text-ink-faint mb-8">continuar lendo</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            {related.map((p: any, i: number) => {
+              const c = colorForCategory(p.data.category, i);
+              const s = p.slug ?? p.id;
+              return (
+                <a href={`/${s}`} class={`color-block color-block-md bg-cat-${c} group`}>
+                  <span class="color-block-num">{String(i + 1).padStart(2, '0')}</span>
+                  <div>
+                    <p class="mono uppercase opacity-80 mb-3">{p.data.category}</p>
+                    <h3 class="font-display text-xl md:text-2xl font-bold leading-[1.1] tracking-tight">
+                      {p.data.title}
+                    </h3>
+                  </div>
+                  <span class="mono uppercase mt-4 inline-flex items-center gap-2 self-start border-b border-current pb-1 group-hover:gap-3 transition-all">
+                    abrir
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    )}
+  </article>
+</BaseLayout>

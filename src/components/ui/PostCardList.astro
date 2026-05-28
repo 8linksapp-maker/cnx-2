@@ -1,0 +1,47 @@
+---
+import { BLOG_BASE } from '../../lib/postUrl';
+interface Props {
+  title: string;
+  slug: string;
+  heroImage?: string;
+  category?: string;
+  pubDate: Date;
+  index?: number;
+}
+
+const { title, slug, heroImage, category, pubDate, index } = Astro.props;
+
+const url = `${BLOG_BASE}/${slug}`;
+const date = pubDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+---
+
+<article class="group flex items-start gap-3 py-3 border-b border-rule last:border-0">
+  {index !== undefined && (
+    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-elev text-ink-faint text-xs font-medium flex items-center justify-center mono tabular-nums">
+      {index + 1}
+    </span>
+  )}
+
+  <a href={url} class="flex-shrink-0 w-16 h-14 rounded overflow-hidden bg-elev" tabindex="-1" aria-hidden="true">
+    {heroImage ? (
+      <img
+        src={heroImage}
+        alt=""
+        loading="lazy"
+        class="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-85"
+      />
+    ) : (
+      <div class="w-full h-full bg-elev"></div>
+    )}
+  </a>
+
+  <div class="flex-1 min-w-0">
+    {category && (
+      <p class="mono uppercase text-[10px] text-ink-faint mb-0.5">{category}</p>
+    )}
+    <h4 class="font-sans font-semibold text-ink text-xs leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+      <a href={url}>{title}</a>
+    </h4>
+    <p class="mono text-ink-faint text-[10px] mt-1">{date}</p>
+  </div>
+</article>

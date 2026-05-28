@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/ui/PostCard.astro';
+import { getCollection } from 'astro:content';
+import { colorForCategory } from '../../lib/categoryColors';
+import { readData } from '../../lib/readData';
+import {
+  normalizeCategories,
+  categoryMatches,
+  collectOrphanCategories,
+  type CategoryEntry,
+} from '../../lib/categorySlug';
+
+export async function getStaticPaths() {
+  const rawCats = readData('categories.json', []);
+  const registered = normalizeCategories(rawCats);
+  const allPosts = await getCollection('blog');
+  const postCats = [...new Set(allPosts.map((p: any) => p.data.category).filter(Boolean))];
+  const orphans = collectOrphanCategories(postCats, registered);
+  const all: CategoryEntry[] = [...registered, ...orphans];
+  return all.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props as { entry: CategoryEntry };
+const allPosts = await getCollection('blog');
+const posts = allPosts
+  .filter((p: any) => categoryMatches(p.data.category, entry))
+  .sort((a: any, b: any) => {
+    const da = new Date(a.data.pubDate || a.data.date || 0).getTime();
+    const db = new Date(b.data.pubDate || b.data.date || 0).getTime();
+    return db - da;
+  });
+
+const catColor = colorForCategory(entry.name);
+---
+
+<BaseLayout title={entry.name} description={entry.description || `Artigos sobre ${entry.name}`}>
+  <section class={`bg-cat-${catColor} relative overflow-hidden isolate`}>
+    <span class="color-block-num" style="bottom:-3rem;right:-1rem;font-size:clamp(14rem,32vw,26rem)">
+      ·
+    </span>
+    <div class="container-x relative z-10 pt-16 md:pt-24 pb-16 md:pb-20">
+      <p class="mono uppercase opacity-75 mb-5 text-white">tópico</p>
+      <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[0.92] mb-4 text-white">
+        {entry.name}
+      </h1>
+      {entry.description && (
+        <p class="text-lg md:text-xl text-white/85 max-w-3xl mb-6 leading-relaxed">{entry.description}</p>
+      )}
+      <p class="mono text-white/80">
+        {posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}
+      </p>
+    </div>
+  </section>
+
+  <div class="container-x py-10 md:py-14">
+    {posts.length === 0 ? (
+      <div class="py-20 border-t border-rule">
+        <p class="mono uppercase text-ink-faint mb-3">vazio</p>
+        <p class="text-ink-muted">Nenhum artigo nesta categoria ainda.</p>
+      </div>
+    ) : (
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        {posts.map((post: any, i: number) => (
+          <PostCard post={post} index={i} />
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>

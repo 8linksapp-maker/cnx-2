@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --c-bg:          250 248 244;
+    --c-surface:     255 254 251;
+    --c-elev:        244 240 232;
+    --c-border:      224 218 206;
+    --c-rule:        212 204 188;
+    --c-ink:           20  20  24;
+    --c-ink-muted:     76  74  82;
+    --c-ink-faint:    136 130 130;
+    --c-primary:      139  74  54;
+    --c-primary-soft: 237 216 207;
+  }
+
+  html, body {
+    font-family: 'Karla', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Karla', system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+
+  code, pre, kbd, samp, .mono {
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    font-feature-settings: 'ss01';
+  }
+
+  input, select, textarea, button {
+    font-family: inherit;
+  }
+}

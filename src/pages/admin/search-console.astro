@@ -1,0 +1,61 @@
+﻿---
+export const prerender = false;
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import SearchConsolePanel from '../../plugins/search-console/SearchConsolePanel';
+import SettingsGSC from '../../plugins/search-console/SettingsGSC';
+import { readData } from '../../lib/readData';
+
+const pluginsConfig = readData<any>('pluginsConfig.json', {});
+const isConfigured = !!(pluginsConfig?.searchConsole?.siteUrl && pluginsConfig?.searchConsole?.serviceAccountJson);
+const defaultTab = isConfigured ? 'analytics' : 'settings';
+---
+
+<AdminLayout title="Search Console" activeSection="search-console">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-ink">Google Search Console</h1>
+        <p class="text-ink-muted mt-1">Acompanhe cliques, impressões e posições do seu site no Google.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-6">
+        <div class="flex gap-1 bg-elev rounded-md p-1 w-fit">
+            <button
+                id="tab-analytics"
+                onclick="showTab('analytics')"
+                class={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${defaultTab === 'analytics' ? 'bg-surface text-primary shadow-sm' : 'text-ink-muted hover:text-ink'}`}
+            >
+                Analytics
+            </button>
+            <button
+                id="tab-settings"
+                onclick="showTab('settings')"
+                class={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${defaultTab === 'settings' ? 'bg-surface text-primary shadow-sm' : 'text-ink-muted hover:text-ink'}`}
+            >
+                Configurações{!isConfigured && <span class="ml-1.5 w-2 h-2 bg-amber-500 rounded-full inline-block align-middle"></span>}
+            </button>
+        </div>
+    </div>
+
+    <div id="panel-analytics" class={defaultTab === 'analytics' ? '' : 'hidden'}>
+        <SearchConsolePanel client:load />
+    </div>
+    <div id="panel-settings" class={defaultTab === 'settings' ? '' : 'hidden'}>
+        <SettingsGSC client:load />
+    </div>
+</AdminLayout>
+
+<script is:inline>
+function showTab(tab) {
+    var panels = { analytics: document.getElementById('panel-analytics'), settings: document.getElementById('panel-settings') };
+    var tabs    = { analytics: document.getElementById('tab-analytics'),  settings: document.getElementById('tab-settings') };
+
+    var activeClass   = 'px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-surface text-primary shadow-sm';
+    var inactiveClass = 'px-4 py-2 rounded-lg text-sm font-semibold transition-all text-ink-muted hover:text-ink';
+
+    Object.keys(panels).forEach(function(key) {
+        var isActive = key === tab;
+        if (panels[key]) panels[key].classList.toggle('hidden', !isActive);
+        if (tabs[key]) tabs[key].className = isActive ? activeClass : inactiveClass;
+    });
+}
+</script>

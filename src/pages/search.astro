@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/ui/PostCard.astro';
+import Sidebar from '../components/sidebar/Sidebar.astro';
+import { getCollection } from 'astro:content';
+
+const url = new URL(Astro.request.url);
+const q = (url.searchParams.get('q') || '').trim().toLowerCase();
+
+const allPosts = await getCollection('blog');
+const results = q
+  ? allPosts.filter((p: any) => {
+      const t = (p.data.title || '').toLowerCase();
+      const d = (p.data.description || '').toLowerCase();
+      const c = (p.data.category || '').toLowerCase();
+      return t.includes(q) || d.includes(q) || c.includes(q);
+    })
+  : [];
+---
+
+<BaseLayout title={q ? `Busca: ${q}` : 'Buscar'} description={`Resultados pra ${q}`}>
+  <section class="border-b border-rule">
+    <div class="container-x pt-16 md:pt-20 pb-10">
+      <p class="mono uppercase text-ink-faint mb-5">busca</p>
+      <h1 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight text-ink leading-[1.05] mb-3 max-w-3xl">
+        {q ? `Resultados pra "${q}"` : 'O que você quer buscar?'}
+      </h1>
+      <p class="mono text-ink-muted">
+        {q
+          ? `${results.length} ${results.length === 1 ? 'resultado' : 'resultados'}`
+          : 'use a busca no menu'}
+      </p>
+    </div>
+  </section>
+
+  <div class="container-x py-12 md:py-16">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-12 lg:gap-20">
+      <main>
+        {q && results.length === 0 && (
+          <div class="py-16 border-t border-rule">
+            <p class="mono uppercase text-ink-faint mb-3">vazio</p>
+            <p class="text-ink-muted text-lg">Nada encontrado pra <strong class="text-ink">"{q}"</strong>.</p>
+            <p class="text-sm text-ink-faint mt-3">Tenta uma palavra diferente.</p>
+          </div>
+        )}
+        {results.map((post: any, i: number) => (
+          <PostCard post={post} index={i} />
+        ))}
+      </main>
+      <Sidebar />
+    </div>
+  </div>
+</BaseLayout>

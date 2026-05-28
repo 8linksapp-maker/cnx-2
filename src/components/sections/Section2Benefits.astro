@@ -1,0 +1,90 @@
+---
+import { BLOG_BASE } from '../../lib/postUrl';
+import { getCollection } from 'astro:content';
+import PostCardList from '../ui/PostCardList.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Escolha dos Editores' } = Astro.props;
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const [editorPick, ...listPosts] = posts;
+const sidePosts = listPosts.slice(0, 4);
+---
+
+{posts.length > 0 && (
+  <section class="py-12 border-t border-rule">
+    <div class="container-x">
+
+      <p class="mono uppercase text-xs text-ink-faint mb-6">{title}</p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
+
+        <!-- Artigo destaque: layout editorial limpo -->
+        {editorPick && (
+          <article class="group">
+            {editorPick.data.heroImage && (
+              <a href={`${BLOG_BASE}/${editorPick.slug}`} class="block overflow-hidden rounded-md aspect-[16/9] mb-5" tabindex="-1" aria-hidden="true">
+                <img
+                  src={editorPick.data.heroImage}
+                  alt=""
+                  loading="lazy"
+                  class="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                />
+              </a>
+            )}
+            {!editorPick.data.heroImage && (
+              <div class="rounded-md aspect-[16/9] bg-elev mb-5"></div>
+            )}
+
+            {editorPick.data.category && (
+              <p class="mono uppercase text-xs text-ink-faint mb-2">{editorPick.data.category}</p>
+            )}
+            <h2 class="font-display font-normal text-xl md:text-2xl text-ink leading-snug tracking-tight">
+              <a href={`${BLOG_BASE}/${editorPick.slug}`} class="hover:text-primary transition-colors">
+                {editorPick.data.title}
+              </a>
+            </h2>
+            <p class="text-sm text-ink-muted leading-relaxed line-clamp-3 mt-2 max-w-prose">
+              {editorPick.data.description}
+            </p>
+            <div class="flex items-center gap-4 mt-4 pt-4 border-t border-rule">
+              <span class="mono text-xs text-ink-faint">
+                {editorPick.data.pubDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+              <a
+                href={`${BLOG_BASE}/${editorPick.slug}`}
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-ink transition-colors"
+              >
+                Ler artigo
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </a>
+            </div>
+          </article>
+        )}
+
+        <!-- Lista lateral -->
+        {sidePosts.length > 0 && (
+          <aside class="bg-surface border border-border rounded-md p-5" aria-label="Mais artigos">
+            <p class="mono uppercase text-xs text-ink-faint mb-1 pb-3 border-b border-rule">Mais artigos</p>
+            {sidePosts.map((post) => (
+              <PostCardList
+                title={post.data.title}
+                slug={post.slug}
+                heroImage={post.data.heroImage}
+                category={post.data.category}
+                pubDate={post.data.pubDate}
+              />
+            ))}
+          </aside>
+        )}
+
+      </div>
+    </div>
+  </section>
+)}

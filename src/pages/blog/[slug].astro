@@ -1,0 +1,263 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import EmailInlineBanner from '../../plugins/email-list/EmailInlineBanner.astro';
+import AffiliateProducts from '../../plugins/affiliates/AffiliateProducts.astro';
+import PostSchemaPlugins from '../../plugins/_slots/PostSchemaPlugins.astro';
+import PostBottomPlugins from '../../plugins/_slots/PostBottomPlugins.astro';
+import PostAfterPlugins from '../../plugins/_slots/PostAfterPlugins.astro';
+import SocialShare from '../../plugins/social-share/SocialShare.astro';
+import PostVideo from '../../components/ui/PostVideo.astro';
+import { getCollection } from 'astro:content';
+import { readData } from '../../lib/readData';
+import { normalizeCategories, getCategorySlug } from '../../lib/categorySlug';
+import { parseVideoUrl } from '../../lib/videoEmbed';
+import { renderShortcodes, hasShortcodes } from '../../lib/shortcodes';
+const authorsData = readData('authors.json', []);
+const allCategories = normalizeCategories(readData('categories.json', []));
+
+const pluginsConfig = readData('pluginsConfig.json', {}) as any;
+const inlineConfig = pluginsConfig?.emailList?.inline;
+const inlineEnabled = inlineConfig?.enabled === true;
+const inlinePosition = Number(inlineConfig?.position ?? 3);
+
+export async function getStaticPaths() {
+  const siteConfig = readData('siteConfig.json', {}) as any;
+  // Se aluno escolheu URL limpa (sem /blog), nao geramos /blog/X
+  if (siteConfig.postUrlPrefix !== 'blog') return [];
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: post,
+  }));
+}
+const post = Astro.props;
+const { Content } = await post.render();
+
+const currentAuthor = authorsData.find((a: any) => a.id === post.data.author) || authorsData[0] || {
+  name: 'Equipe',
+  role: 'Redação',
+  avatar: '',
+  bio: ''
+};
+
+const categorySlug = post.data.category ? getCategorySlug(post.data.category, allCategories) : '';
+const siteConfig = readData('siteConfig.json', {}) as any;
+const postUrl = `${siteConfig.url || Astro.url.origin}/blog/${post.slug}`;
+
+const videoUrl = post.data.videoUrl || '';
+const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
+const hasValidVideo = videoInfo && videoInfo.provider !== 'unknown';
+const videoPosition = post.data.videoPosition || 'after-hero';
+
+const rawBody = (post.body || '') as string;
+const isHtmlBody = /^\s*</.test(rawBody.trim());
+const processedHtml = isHtmlBody && hasShortcodes(rawBody) ? renderShortcodes(rawBody) : null;
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} image={post.data.heroImage} type="article">
+  <PostSchemaPlugins
+    title={post.data.title}
+    description={post.data.description || ''}
+    url={postUrl}
+    image={post.data.heroImage}
+    datePublished={post.data.pubDate instanceof Date ? post.data.pubDate.toISOString() : post.data.pubDate}
+    authorName={currentAuthor?.name}
+    category={post.data.category}
+    videoUrl={hasValidVideo ? videoUrl : undefined}
+  />
+
+  <!-- section main content -->
+  <section class="main-content mt-3">
+    <div class="container-xl">
+
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          {post.data.category && (
+            <li class="breadcrumb-item"><a href={`/categoria/${categorySlug}`}>{post.data.category}</a></li>
+          )}
+          <li class="breadcrumb-item active" aria-current="page">{post.data.title}</li>
+        </ol>
+      </nav>
+
+      <div class="row gy-4">
+
+        <div class="col-lg-8" style="min-width:0;">
+          <!-- post single -->
+          <div class="post post-single">
+            <!-- post header -->
+            <div class="post-header">
+              <h1 class="title mt-0 mb-3">{post.data.title}</h1>
+              <ul class="meta list-inline mb-0">
+                <li class="list-inline-item">
+                  {currentAuthor.avatar ? (
+                    <a href="#"><img src={currentAuthor.avatar} class="author" alt={currentAuthor.name} />{currentAuthor.name}</a>
+                  ) : (
+                    <a href="#">{currentAuthor.name}</a>
+                  )}
+                </li>
+                {post.data.category && (
+                  <li class="list-inline-item"><a href={`/categoria/${categorySlug}`}>{post.data.category}</a></li>
+                )}
+                <li class="list-inline-item post-date">
+                  {post.data.pubDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </li>
+              </ul>
+            </div>
+            <!-- featured image OR video hero -->
+            {hasValidVideo && videoPosition === 'hero' ? (
+              <div class="featured-image">
+                <PostVideo
+                url={videoUrl}
+                title={post.data.title}
+                description={post.data.description}
+                uploadDate={post.data.pubDate instanceof Date ? post.data.pubDate.toISOString() : String(post.data.pubDate)}
+                lite={true}
+              />
+              </div>
+            ) : post.data.heroImage ? (
+              <div class="featured-image">
+                <img src={post.data.heroImage} alt={post.data.title} />
+              </div>
+            ) : null}
+            <!-- video after hero -->
+            {hasValidVideo && videoPosition === 'after-hero' && (
+              <PostVideo
+                url={videoUrl}
+                title={post.data.title}
+                description={post.data.description}
+                uploadDate={post.data.pubDate instanceof Date ? post.data.pubDate.toISOString() : String(post.data.pubDate)}
+                lite={true}
+              />
+            )}
+            <!-- post content -->
+            <div class="post-content clearfix">
+              {processedHtml ? (
+                <Fragment set:html={processedHtml} />
+              ) : (
+                <Content />
+              )}
+            </div>
+            {inlineEnabled && (
+              <div id="email-inline-source" data-position={inlinePosition} style="display:none">
+                <EmailInlineBanner />
+              </div>
+            )}
+            <AffiliateProducts />
+            <!-- post bottom section -->
+            <div class="post-bottom">
+              <div class="row d-flex align-items-center">
+                <div class="col-md-6 col-12 text-center text-md-start">
+                  {post.data.category && (
+                    <a href={`/categoria/${categorySlug}`} class="tag">#{post.data.category}</a>
+                  )}
+                </div>
+                <div class="col-md-6 col-12 float-md-end">
+                  <PostBottomPlugins title={post.data.title} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spacer" data-height="50"></div>
+
+          <!-- about author -->
+          <div class="about-author padding-30 rounded">
+            <div class="thumb">
+              {currentAuthor.avatar ? (
+                <img src={currentAuthor.avatar} alt={currentAuthor.name} />
+              ) : (
+                <div style="width:80px;height:80px;background:#f5f5f5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#8F9BAD;">
+                  {currentAuthor.name.charAt(0)}
+                </div>
+              )}
+            </div>
+            <div class="details">
+              <h4 class="name"><a href="#">{currentAuthor.name}</a></h4>
+              {currentAuthor.role && <span style="color:var(--walker-primary);font-size:0.85rem;">{currentAuthor.role}</span>}
+              {currentAuthor.bio && <p>{currentAuthor.bio}</p>}
+              <SocialShare title={post.data.title} context="author-box" />
+            </div>
+          </div>
+
+          <div class="spacer" data-height="50"></div>
+
+          <PostAfterPlugins
+            currentSlug={post.slug}
+            category={post.data.category || ''}
+          />
+
+          <div class="spacer" data-height="50"></div>
+
+          <!-- section header -->
+          <div class="section-header">
+            <h3 class="section-title">Deixe um Comentário</h3>
+            <img src="/images/wave.svg" class="wave" alt="wave" />
+          </div>
+          <!-- comment form -->
+          <div class="comment-form rounded bordered padding-30">
+            <form id="comment-form" class="comment-form" method="post">
+              <div class="messages"></div>
+              <div class="row">
+                <div class="column col-md-12">
+                  <div class="form-group">
+                    <textarea name="InputComment" id="InputComment" class="form-control" rows="4" placeholder="Seu comentário..." required></textarea>
+                  </div>
+                </div>
+                <div class="column col-md-6">
+                  <div class="form-group">
+                    <input type="text" class="form-control" id="InputName" name="InputName" placeholder="Seu nome" required>
+                  </div>
+                </div>
+                <div class="column col-md-6">
+                  <div class="form-group">
+                    <input type="email" class="form-control" id="InputEmail" name="InputEmail" placeholder="Seu e-mail" required>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" name="submit" id="submit" value="Submit" class="btn btn-default">Enviar Comentário</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <Sidebar />
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+  // Substitui &nbsp; (espaço não-quebrável do Quill) por espaços normais nos artigos já salvos
+  (function() {
+    var postContent = document.querySelector('.post-content');
+    if (!postContent) return;
+    var walker = document.createTreeWalker(postContent, NodeFilter.SHOW_TEXT, null);
+    var node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue && node.nodeValue.indexOf('\u00A0') !== -1) {
+        node.nodeValue = node.nodeValue.replace(/\u00A0/g, ' ');
+      }
+    }
+  })();
+  </script>
+
+  {inlineEnabled && (
+    <script>
+    (function() {
+      const source = document.getElementById('email-inline-source');
+      if (!source) return;
+      const pos = Number((source as HTMLElement).dataset.position) || 3;
+      const paragraphs = document.querySelectorAll('.post-content > p');
+      const target = paragraphs[pos - 1] || paragraphs[paragraphs.length - 1];
+      if (target) {
+        target.insertAdjacentElement('afterend', source);
+        source.style.display = 'block';
+      }
+    })();
+    </script>
+  )}
+
+</BaseLayout>

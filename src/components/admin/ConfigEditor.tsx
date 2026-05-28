@@ -1,0 +1,446 @@
+﻿import React, { useState, useEffect } from 'react';
+import { Save, AlertCircle, Loader2, Image as ImageIcon } from 'lucide-react';
+import { triggerToast } from './CmsToaster';
+import { githubApi } from '../../lib/adminApi';
+
+export default function ConfigEditor() {
+    const [config, setConfig] = useState<any>(null);
+    const [fileSha, setFileSha] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [pendingLogo, setPendingLogo] = useState<File | null>(null);
+    const [pendingFavicon, setPendingFavicon] = useState<File | null>(null);
+
+    const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve((reader.result?.toString() || '').split(',')[1]);
+        reader.onerror = error => reject(error);
+    });
+
+    useEffect(() => {
+        githubApi('read', 'src/data/siteConfig.json')
+            .then(data => { const cfg = JSON.parse(data?.content || "{}"); if (typeof cfg.logo === 'string' && cfg.logo.startsWith('blob:')) cfg.logo = ''; if (typeof cfg.favicon === 'string' && cfg.favicon.startsWith('blob:')) cfg.favicon = ''; setConfig(cfg); setFileSha(data.sha); })
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true); setError('');
+        triggerToast('Sincronizando configurações...', 'progress', 20);
+        try {
+            let configCopy = { ...config };
+            if (pendingLogo) {
+                triggerToast('Enviando novo logo...', 'progress', 30);
+                const base64Content = await fileToBase64(pendingLogo);
+                const fileExt = pendingLogo.name.split('.').pop() || 'png';
+                const ghPath = `public/uploads/${Date.now()}-logo.${fileExt}`;
+                await githubApi('write', ghPath, { content: base64Content, isBase64: true, message: 'CMS: Upload Logo' });
+                configCopy.logo = ghPath.replace('public', '');
+            }
+            if (pendingFavicon) {
+                triggerToast('Enviando favicon...', 'progress', 50);
+                const base64Content = await fileToBase64(pendingFavicon);
+                const fileExt = pendingFavicon.name.split('.').pop() || 'png';
+                const ghPath = `public/favicon.${fileExt}`;
+                let faviconSha: string | undefined;
+                try {
+                    const existing = await githubApi('read', ghPath);
+                    if (existing?.sha) faviconSha = existing.sha;
+                } catch {}
+                await githubApi('write', ghPath, { content: base64Content, isBase64: true, sha: faviconSha, message: 'CMS: Upload Favicon' });
+                configCopy.favicon = `/favicon.${fileExt}`;
+            }
+            if (typeof configCopy.logo === 'string' && configCopy.logo.startsWith('blob:')) configCopy.logo = '';
+            if (typeof configCopy.favicon === 'string' && configCopy.favicon.startsWith('blob:')) configCopy.favicon = '';
+            const res = await githubApi('write', 'src/data/siteConfig.json', { content: JSON.stringify(configCopy, null, 2), sha: fileSha, message: 'CMS: Update siteConfig.json' });
+            setFileSha(res.sha);
+            setConfig(configCopy);
+            setPendingLogo(null); setPendingFavicon(null);
+            triggerToast('Configurações salvas com sucesso!', 'success', 100);
+        } catch (err: any) {
+            setError(err.message); triggerToast(`Erro: ${err.message}`, 'error');
+        } finally { setSaving(false); }
+    };
+
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-20 text-ink-faint bg-surface rounded-3xl border border-border">
+            <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
+            <p className="font-medium animate-pulse">Conectando ao Repositório...</p>
+        </div>
+    );
+
+    if (error && !config) return (
+        <div className="bg-red-50 text-red-700 p-8 rounded-3xl border border-red-200 flex gap-4 items-start">
+            <AlertCircle className="w-8 h-8 shrink-0" />
+            <div><h3 className="text-xl font-bold mb-2">Erro de Leitura</h3><p>{error}</p></div>
+        </div>
+    );
+
+    const inputClass = "w-full bg-surface border border-border rounded-md px-4 py-3 text-sm focus:outline-none focus:border-primary/80 focus:ring-2 focus:ring-primary/20/20 transition-all shadow-sm text-ink font-medium";
+    const labelClass = "block text-sm font-bold text-ink-muted uppercase tracking-wider mb-2 ml-1";
+
+    const presetThemes = [
+        { name: 'Rosa Original', primary: '#FE4F70', accent: '#FFA387', dark: '#203656' },
+        { name: 'Oceano',        primary: '#2196F3', accent: '#64B5F6', dark: '#0D2137' },
+        { name: 'Floresta',      primary: '#4CAF50', accent: '#81C784', dark: '#1B3A2A' },
+        { name: 'Sunset',        primary: '#FF5722', accent: '#FFAB91', dark: '#4A1A0A' },
+        { name: 'Roxo Elegante', primary: '#7C3AED', accent: '#A78BFA', dark: '#2D1060' },
+        { name: 'Dourado',       primary: '#D4A017', accent: '#F0D060', dark: '#3D2A00' },
+    ];
+
+    return (
+        <form onSubmit={handleSave} className="space-y-8 pb-32 max-w-3xl">
+            {/* Action Bar */}
+            <div className="flex items-center justify-between bg-surface p-4 px-6 rounded-lg border border-border shadow-sm">
+                <div>
+                    <h2 className="text-lg font-bold text-ink">Configurações Gerais</h2>
+                    <p className="text-xs text-ink-muted mt-0.5">Edita o arquivo <code className="bg-elev px-1 rounded">src/data/siteConfig.json</code></p>
+                </div>
+                <button type="submit" disabled={saving} className="bg-primary hover:bg-primary disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-sm shadow-none/20 transition-all">
+                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" aria-hidden="true" />}
+                    {saving ? 'Salvando...' : 'Salvar Alterações'}
+                </button>
+            </div>
+
+            {error && <div className="p-5 bg-red-100/50 text-red-700 rounded-lg font-bold border border-red-200 flex gap-3"><AlertCircle className="w-5 h-5 shrink-0" /> {error}</div>}
+
+            {/* Identidade */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-8 border-b border-border pb-4">Identidade Base</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="md:col-span-2 flex flex-col sm:flex-row gap-8 items-start">
+                        <div className="w-full sm:w-1/3">
+                            <label className={labelClass}>Logo Principal</label>
+                            <label aria-label="Enviar logo do site" className="group relative border-2 border-dashed border-border hover:border-primary/80 bg-elev hover:bg-primary-soft/50 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-all text-center h-48">
+                                <input type="file" accept="image/*" aria-label="Selecionar arquivo de logo (PNG ou SVG)" className="hidden" onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) { setPendingLogo(file); setConfig({ ...config, logo: URL.createObjectURL(file) }); }
+                                }} />
+                                {config?.logo ? (
+                                    <img src={config.logo} alt="Logo" className="max-h-24 w-auto object-contain mb-4 group-hover:scale-105 transition-transform" />
+                                ) : (
+                                    <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center text-ink-faint shadow-sm mb-3 group-hover:text-primary transition-colors">
+                                        <ImageIcon className="w-8 h-8" />
+                                    </div>
+                                )}
+                                <span className="text-sm font-semibold text-ink group-hover:text-primary transition-colors">
+                                    {config?.logo ? 'Trocar Logo' : 'Enviar Logo (PNG/SVG)'}
+                                </span>
+                            </label>
+                            <div className="mt-3">
+                                <label className="text-xs font-semibold text-ink-muted flex justify-between mb-1">
+                                    <span>Tamanho da logo (header)</span>
+                                    <span className="font-mono text-primary">{config?.logoHeight ?? 40}px</span>
+                                </label>
+                                <input type="range" min={24} max={120} step={2} value={config?.logoHeight ?? 40} onChange={e => setConfig({ ...config, logoHeight: Number(e.target.value) })} className="w-full accent-primary" />
+                            </div>
+                        </div>
+                        <div className="w-full sm:w-1/3">
+                            <label className={labelClass}>Favicon</label>
+                            <label aria-label="Enviar favicon do site" className="group relative border-2 border-dashed border-border hover:border-primary/80 bg-elev hover:bg-primary-soft/50 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-all text-center h-48">
+                                <input type="file" accept="image/png,image/svg+xml,image/x-icon,image/ico" aria-label="Selecionar arquivo de favicon (PNG, SVG ou ICO)" className="hidden" onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) { setPendingFavicon(file); setConfig({ ...config, favicon: URL.createObjectURL(file) }); }
+                                }} />
+                                {config?.favicon ? (
+                                    <img src={config.favicon} alt="Favicon" className="max-h-16 w-auto object-contain mb-4 group-hover:scale-105 transition-transform" />
+                                ) : (
+                                    <div className="w-12 h-12 bg-surface rounded-lg flex items-center justify-center text-ink-faint shadow-sm mb-3 group-hover:text-primary transition-colors text-2xl">⭐</div>
+                                )}
+                                <span className="text-sm font-semibold text-ink group-hover:text-primary transition-colors">
+                                    {config?.favicon ? 'Trocar Favicon' : 'Enviar Favicon'}
+                                </span>
+                                <span className="text-[10px] text-ink-faint mt-1">PNG, SVG ou ICO</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div className="md:col-span-2 space-y-6">
+                        <div>
+                            <label className={labelClass}>Nome do Site / Empresa</label>
+                            <input type="text" value={config?.name || ''} onChange={e => setConfig({ ...config, name: e.target.value })} className={inputClass} />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Descrição do Site</label>
+                            <textarea rows={2} placeholder="Breve descrição que aparece no widget 'Sobre' da sidebar do blog" value={config?.description || ''} onChange={e => setConfig({ ...config, description: e.target.value })} className={`${inputClass} resize-y`} />
+                        </div>
+                        {/* Preset Themes */}
+                        <div>
+                            <label className={labelClass}>Temas Prontos</label>
+                            <div className="flex flex-wrap gap-2">
+                                {presetThemes.map(preset => (
+                                    <button
+                                        key={preset.name}
+                                        type="button"
+                                        onClick={() => setConfig({ ...config, theme: { ...config.theme, primary: preset.primary, accent: preset.accent, dark: preset.dark } })}
+                                        className="flex items-center gap-2 px-3 py-2 bg-elev border border-border rounded-md hover:border-primary/60 hover:bg-primary-soft transition-all text-sm font-semibold text-ink"
+                                    >
+                                        <span className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ background: preset.primary }} />
+                                        <span className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ background: preset.accent }} />
+                                        {preset.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {[
+                                { key: 'primary', label: 'Cor Primária' },
+                                { key: 'accent', label: 'Cor de Destaque' },
+                                { key: 'text', label: 'Cor do Texto' },
+                                { key: 'heading', label: 'Cor dos Títulos' },
+                            ].map(f => (
+                                <div key={f.key}>
+                                    <label className={labelClass}>{f.label}</label>
+                                    <div className="flex gap-4 p-2 bg-elev border border-border rounded-md">
+                                        <input type="color" value={config?.theme?.[f.key] || '#000000'} onChange={e => setConfig({ ...config, theme: { ...config.theme, [f.key]: e.target.value } })} className="h-10 w-16 p-0 border-0 rounded-lg cursor-pointer bg-transparent" />
+                                        <input type="text" value={config?.theme?.[f.key] || ''} onChange={e => setConfig({ ...config, theme: { ...config.theme, [f.key]: e.target.value } })} className="flex-1 bg-transparent border-none focus:outline-none font-mono text-ink font-bold" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Live Preview */}
+                        {(config?.theme?.primary || config?.theme?.accent) && (
+                            <div>
+                                <label className={labelClass}>Preview</label>
+                                <div
+                                    className="h-14 rounded-md flex items-center justify-center text-white font-bold text-sm shadow-sm"
+                                    style={{ background: `linear-gradient(to right, ${config?.theme?.primary || '#FE4F70'} 0%, ${config?.theme?.accent || '#FFA387'} 100%)` }}
+                                >
+                                    Botões · Destaques · Categorias
+                                </div>
+                            </div>
+                        )}
+                        <div>
+                            <label className={labelClass}>Combinação de Fontes</label>
+                            <select value={config?.theme?.font || 'outfit'} onChange={e => setConfig({ ...config, theme: { ...config.theme, font: e.target.value } })} className={inputClass}>
+                                <option value="inter">Inter & Roboto Mono (Moderno / Tech)</option>
+                                <option value="outfit">Outfit & Inter (Clean / SaaS)</option>
+                                <option value="roboto">Roboto & Open Sans (Corporativo / Neutro)</option>
+                                <option value="poppins">Poppins & Lora (Criativo / Boutique)</option>
+                                <option value="montserrat">Montserrat & Merriweather (Profissional / Textual)</option>
+                                <option value="playfair">Playfair Display & Source Sans (Elegante / Editorial)</option>
+                                <option value="lora">Lora & Merriweather (Revista / Narrativa)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Prefixo da URL dos Posts */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-2 border-b border-border pb-4">Estrutura da URL dos posts</h3>
+                <p className="text-xs text-ink-muted mb-6 leading-relaxed">
+                    Quando você muda essa opção, as URLs antigas ganham redirect 301 automático no <code className="bg-elev px-1 rounded">vercel.json</code>. SEO preservado.
+                </p>
+                <div className="flex gap-2">
+                    {[
+                        { value: '', label: 'dominio.com/slug-do-post', desc: 'URL limpa (recomendado)', recommended: true },
+                        { value: 'blog', label: 'dominio.com/blog/slug-do-post', desc: 'Com prefixo /blog' },
+                    ].map(opt => {
+                        const current = config?.postUrlPrefix ?? '';
+                        const active = current === opt.value;
+                        return (
+                            <label key={opt.value} className={`relative flex-1 p-4 border-2 rounded-md cursor-pointer transition-all text-center ${active ? 'border-primary/80 bg-primary-soft shadow-sm' : 'border-border hover:border-border'}`}>
+                                <input type="radio" name="postUrlPrefix" value={opt.value} checked={active} onChange={e => setConfig({ ...config, postUrlPrefix: e.target.value })} className="hidden" />
+                                {opt.recommended && (
+                                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary text-white">recomendado</span>
+                                )}
+                                <p className="text-sm font-mono font-bold text-ink mt-1">{opt.label}</p>
+                                <p className="text-[11px] text-ink-muted mt-1">{opt.desc}</p>
+                            </label>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Exibição dos Posts */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-8 border-b border-border pb-4">Exibição dos Posts</h3>
+                <label className="flex items-center justify-between gap-4 p-4 bg-elev border border-border rounded-md cursor-pointer hover:border-primary/60 transition-all">
+                    <div>
+                        <p className="text-sm font-bold text-ink">Ocultar data de publicação</p>
+                        <p className="text-xs text-ink-muted">Esconde a data nos cards e na página dos artigos</p>
+                    </div>
+                    <input type="checkbox" checked={!!config?.hidePostDate} onChange={e => setConfig({ ...config, hidePostDate: e.target.checked })} className="w-5 h-5 accent-primary" />
+                </label>
+            </div>
+
+            {/* Informações de Contato */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-8 border-b border-border pb-4">Informações de Contato</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* URL do site — nível raiz do siteConfig */}
+                    <div>
+                        <label className={labelClass}>URL do Site</label>
+                        <input type="text" placeholder="https://seusite.com.br" value={config?.url || ''} onChange={e => setConfig({ ...config, url: e.target.value })} className={inputClass} />
+                    </div>
+                    {/* email, phone, address — dentro de contact{} */}
+                    {[
+                        { key: 'email',   label: 'E-mail',              placeholder: 'contato@seusite.com' },
+                        { key: 'phone',   label: 'Telefone / WhatsApp', placeholder: '(11) 99999-9999' },
+                        { key: 'address', label: 'Endereço',            placeholder: 'Rua X, 123 — Cidade/UF' },
+                    ].map(f => (
+                        <div key={f.key}>
+                            <label className={labelClass}>{f.label}</label>
+                            <input
+                                type="text"
+                                placeholder={f.placeholder}
+                                value={config?.contact?.[f.key] || ''}
+                                onChange={e => setConfig({ ...config, contact: { ...config.contact, [f.key]: e.target.value } })}
+                                className={inputClass}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Redes Sociais */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-8 border-b border-border pb-4">Redes Sociais (Rodapé)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {['instagram', 'twitter', 'linkedin', 'github', 'youtube', 'facebook', 'pinterest'].map(social => (
+                        <div key={social}>
+                            <label className={labelClass}>{social}</label>
+                            <input type="url" placeholder={`https://${social}.com/seuperfil`} value={config?.social?.[social] || ''} onChange={e => setConfig({ ...config, social: { ...config.social, [social]: e.target.value } })} className={`${inputClass} font-mono`} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Feed do Instagram (home) */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-2 border-b border-border pb-4">Galeria do Instagram (rodapé do site)</h3>
+                <p className="text-sm text-ink-muted mb-6">Cole até 6 URLs de imagens (ex: capturas dos seus posts no Instagram). Se vazio, mostra placeholders. Cada imagem linka pro perfil definido em Redes Sociais &gt; instagram.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => {
+                        const arr = Array.isArray(config?.instagramFeed) ? config.instagramFeed : [];
+                        const item = arr[i] || { src: '', link: '' };
+                        const src = typeof item === 'string' ? item : (item.src || '');
+                        const link = typeof item === 'string' ? '' : (item.link || '');
+                        const updateItem = (key: 'src' | 'link', val: string) => {
+                            const next = [...arr];
+                            const cur = next[i];
+                            const obj = typeof cur === 'string' ? { src: cur, link: '' } : { ...(cur || {}) };
+                            obj[key] = val;
+                            next[i] = obj;
+                            setConfig({ ...config, instagramFeed: next });
+                        };
+                        return (
+                            <div key={i} className="bg-elev border border-border rounded-lg p-3 space-y-2">
+                                <div className="flex items-center gap-3">
+                                    {src ? (
+                                        <img src={src} alt={`Insta ${i+1}`} className="w-14 h-14 rounded-md object-cover border border-border" />
+                                    ) : (
+                                        <div className="w-14 h-14 rounded-md bg-elev flex items-center justify-center text-ink-faint text-xs">{i+1}</div>
+                                    )}
+                                    <div className="flex-1 space-y-2">
+                                        <input type="url" placeholder="URL da imagem" value={src} onChange={e => updateItem('src', e.target.value)} className={`${inputClass} font-mono text-xs`} />
+                                        <input type="url" placeholder="Link do post (opcional)" value={link} onChange={e => updateItem('link', e.target.value)} className={`${inputClass} font-mono text-xs`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Rodape (Footer) */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-8 border-b border-border pb-4">Rodape (Footer)</h3>
+                <div className="space-y-4">
+                    <div><label className={labelClass}>Descricao do Footer</label><textarea rows={3} placeholder="Texto que aparece no rodape do site" value={config?.footer?.description || ''} onChange={e => setConfig({ ...config, footer: { ...config.footer, description: e.target.value } })} className={`${inputClass} resize-y`} /></div>
+                    <div><label className={labelClass}>Texto de Copyright</label><input type="text" placeholder="Nome da empresa ou site" value={config?.footer?.copyright || ''} onChange={e => setConfig({ ...config, footer: { ...config.footer, copyright: e.target.value } })} className={inputClass} /></div>
+                </div>
+            </div>
+
+            {/* SEO Global */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-8 border-b border-border pb-4">SEO Global</h3>
+                <div className="space-y-4">
+                    <div><label className={labelClass}>Título Padrão (SEO)</label><input type="text" value={config?.seo?.title || ''} onChange={e => setConfig({ ...config, seo: { ...config.seo, title: e.target.value } })} className={inputClass} /></div>
+                    <div><label className={labelClass}>Descrição Padrão</label><textarea rows={3} value={config?.seo?.description || ''} onChange={e => setConfig({ ...config, seo: { ...config.seo, description: e.target.value } })} className={`${inputClass} resize-y`} /></div>
+                </div>
+            </div>
+
+            {/* Sitemap */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-8 border-b border-border pb-4">Sitemap</h3>
+                <div className="space-y-4">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-md p-4">
+                        <p className="text-sm font-bold text-emerald-700 mb-1">Sitemap XML gerado automaticamente</p>
+                        <p className="text-xs text-emerald-600 mb-3">O sitemap é atualizado a cada build/deploy com todas as páginas e posts do site.</p>
+                        {config?.url ? (
+                            <div className="space-y-2">
+                                <a href={`${config.url.replace(/\/$/, '')}/sitemap-index.xml`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-700 bg-surface px-4 py-2 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    {config.url.replace(/\/$/, '')}/sitemap-index.xml
+                                </a>
+                                <p className="text-xs text-ink-muted">Use esta URL no Google Search Console para enviar seu sitemap.</p>
+                            </div>
+                        ) : (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p className="text-xs text-amber-700 font-medium">Configure a URL do Site acima para ver o link do sitemap.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Robots.txt */}
+            <div className="p-8 bg-surface border border-border rounded-lg shadow-sm">
+                <h3 className="text-xl font-bold text-ink mb-2 flex items-center gap-2">🤖 Robots.txt</h3>
+                <p className="text-sm text-ink-muted mb-6 border-b border-border pb-4">
+                    Controla quais páginas os buscadores (Google, Bing) podem indexar. <code className="bg-elev px-1 rounded">/admin</code> e <code className="bg-elev px-1 rounded">/api</code> já são bloqueados por padrão. O sitemap é linkado automaticamente.
+                </p>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-elev border border-border rounded-md">
+                        <div>
+                            <label className="text-sm font-bold text-ink">Bloquear todos os buscadores</label>
+                            <p className="text-xs text-ink-muted mt-0.5">Use no modo desenvolvimento — impede Google/Bing de indexar o site enquanto você ajusta. Desligue antes de divulgar.</p>
+                        </div>
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={!!config?.robots?.noindex}
+                            aria-label="Bloquear indexação pelos buscadores"
+                            onClick={() => setConfig({ ...config, robots: { ...(config?.robots || {}), noindex: !config?.robots?.noindex } })}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ml-4 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 ${config?.robots?.noindex ? 'bg-red-600' : 'bg-elev border border-border'}`}
+                        >
+                            <span aria-hidden="true" className={`inline-block h-4 w-4 transform rounded-full bg-surface shadow transition-transform ${config?.robots?.noindex ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+                    {!config?.robots?.noindex && (
+                        <div>
+                            <label className={labelClass}>Bloquear páginas extras (1 por linha)</label>
+                            <textarea
+                                rows={4}
+                                value={(config?.robots?.extraDisallow || []).join('\n')}
+                                onChange={e => setConfig({
+                                    ...config,
+                                    robots: {
+                                        ...(config?.robots || {}),
+                                        extraDisallow: e.target.value.split('\n').map(s => s.trim()).filter(Boolean),
+                                    }
+                                })}
+                                placeholder="/promocao-secreta&#10;/area-restrita"
+                                className={`${inputClass} font-mono resize-y`}
+                            />
+                            <p className="text-[11px] text-ink-faint mt-1">Outras páginas que você quer esconder dos buscadores (ex: páginas de promoção temporária).</p>
+                        </div>
+                    )}
+                    {config?.url ? (
+                        <div className="bg-elev border border-border rounded-md p-4">
+                            <p className="text-xs font-bold text-ink-muted mb-2">Preview / Verificar:</p>
+                            <a href={`${config.url.replace(/\/$/, '')}/robots.txt`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-primary transition-colors">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                {config.url.replace(/\/$/, '')}/robots.txt
+                            </a>
+                        </div>
+                    ) : null}
+                </div>
+            </div>
+        </form>
+    );
+}

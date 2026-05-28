@@ -1,0 +1,18 @@
+{
+  "hero": {
+    "title": "Um espaço para o conteúdo que importa",
+    "desc": "Este blog reúne artigos, guias e ideias sobre os temas que movem quem acompanha a gente. A proposta é simples: informação clara, bem apurada e direta ao ponto, sem enrolação e sem ruído. Seja você um visitante de primeira viagem ou um leitor frequente, aqui você encontra conteúdo feito para ajudar de verdade.",
+    "image": ""
+  },
+  "content": {
+    "missionTitle": "Nossa missão",
+    "missionText": "Acreditamos que bom conteúdo transforma. Nossa missão é tornar assuntos relevantes acessíveis a todos, com textos honestos, fáceis de entender e úteis no dia a dia.\n\nPublicamos com cuidado, pesquisamos com atenção e tratamos cada leitor como gostaríamos de ser tratados: com respeito ao seu tempo e à sua inteligência.",
+    "teamTitle": "Quem escreve por aqui",
+    "teamText": "Por trás de cada publicação existem pessoas apaixonadas pelo que fazem. Conheça quem pesquisa, escreve e revisa o conteúdo que chega até você."
+  },
+  "seo": {
+    "title": "",
+    "description": "",
+    "image": ""
+  }
+}

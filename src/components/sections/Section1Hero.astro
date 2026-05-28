@@ -1,0 +1,92 @@
+---
+import { BLOG_BASE } from '../../lib/postUrl';
+import { getCollection } from 'astro:content';
+import PostCardList from '../ui/PostCardList.astro';
+import { colorForCategory } from '../../lib/categoryColors';
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+}
+
+const { title = 'Últimos artigos', subtitle } = Astro.props;
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const [featuredPost, ...otherPosts] = posts;
+const recentPosts = otherPosts.slice(0, 5);
+
+const featuredCategory = featuredPost?.data.category || 'Geral';
+const featuredColor = colorForCategory(featuredCategory, 0);
+const featuredDate = featuredPost?.data.pubDate
+  ? featuredPost.data.pubDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' }).replace('.', '')
+  : '';
+---
+
+<section class="py-10">
+  <div class="container-x">
+    <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 lg:gap-8">
+
+      <!-- Post destaque: color-block editorial -->
+      {featuredPost ? (
+        <a
+          href={`${BLOG_BASE}/${featuredPost.slug}`}
+          class={`color-block color-block-lg bg-cat-${featuredColor} group`}
+          aria-label={`Ler: ${featuredPost.data.title}`}
+        >
+          <span class="color-block-num" aria-hidden="true">01</span>
+          <div>
+            <p class="mono uppercase opacity-75 mb-4 text-sm">
+              {featuredCategory} · {featuredDate}
+            </p>
+            <h1 class="font-display font-normal text-2xl md:text-3xl lg:text-4xl leading-[1.08] tracking-tight max-w-xl">
+              {featuredPost.data.title}
+            </h1>
+          </div>
+          <div class="flex items-end justify-between gap-4 mt-8">
+            {featuredPost.data.description && (
+              <p class="text-sm md:text-base leading-relaxed max-w-sm opacity-80 line-clamp-3">
+                {featuredPost.data.description}
+              </p>
+            )}
+            <span class="mono uppercase shrink-0 inline-flex items-center gap-2 border-b border-current pb-1 group-hover:gap-3 transition-all duration-200 self-end text-sm">
+              ler artigo
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      ) : (
+        <div class="color-block color-block-lg bg-elev flex flex-col items-center justify-center text-center">
+          <h1 class="font-display font-normal text-2xl text-ink tracking-tight">{title}</h1>
+          {subtitle && <p class="text-sm text-ink-muted mt-2">{subtitle}</p>}
+        </div>
+      )}
+
+      <!-- Lista lateral: recentes -->
+      <aside class="bg-surface border border-border rounded-md overflow-hidden flex flex-col" aria-label="Artigos recentes">
+        <div class="px-5 py-4 border-b border-rule">
+          <p class="mono uppercase text-xs text-ink-faint">Recentes</p>
+        </div>
+        <div class="px-5 py-2 flex-1">
+          {recentPosts.length > 0 ? (
+            recentPosts.map((post, i) => (
+              <PostCardList
+                title={post.data.title}
+                slug={post.slug}
+                heroImage={post.data.heroImage}
+                category={post.data.category}
+                pubDate={post.data.pubDate}
+                index={i}
+              />
+            ))
+          ) : (
+            <p class="text-ink-faint text-sm text-center py-8">Nenhum post ainda.</p>
+          )}
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</section>

@@ -1,0 +1,14 @@
+---
+export const prerender = false;
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import CmsDashboard from '../../components/admin/CmsDashboard';
+import RepoVisibilityBanner from '../../components/admin/RepoVisibilityBanner';
+---
+<AdminLayout title="Início" activeSection="dashboard">
+    <RepoVisibilityBanner client:load />
+    <div class="mb-8">
+        <h1 class="text-xl font-semibold text-ink">Olá! O que fazemos hoje?</h1>
+        <p class="text-sm text-ink-muted mt-1">Escreva, publique e gerencie o seu blog.</p>
+    </div>
+    <CmsDashboard client:load />
+</AdminLayout>

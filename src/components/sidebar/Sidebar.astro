@@ -1,0 +1,92 @@
+---
+import { getCollection } from 'astro:content';
+import { readData } from '../../lib/readData';
+import { normalizeCategories, collectOrphanCategories } from '../../lib/categorySlug';
+
+const siteConfig = readData('siteConfig.json');
+const homeData = readData('home.json', {});
+
+const allPosts = await getCollection('blog');
+const recentPosts = allPosts
+  .sort((a: any, b: any) => {
+    const da = new Date(a.data.pubDate || a.data.date || 0).getTime();
+    const db = new Date(b.data.pubDate || b.data.date || 0).getTime();
+    return db - da;
+  })
+  .slice(0, 5);
+
+const categoriesData = readData('categories.json', []);
+const registered = normalizeCategories(categoriesData);
+const postCats = [...new Set(allPosts.map((p: any) => p.data.category).filter(Boolean))];
+const orphans = collectOrphanCategories(postCats, registered);
+const allCategories = registered.length > 0 ? [...registered, ...orphans] : orphans;
+
+const highlight = (homeData as any)?.sidebar?.highlight;
+
+function fmtDate(d: any): string {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '';
+  return dt.toLocaleDateString('pt-BR', { month: 'short', day: '2-digit' }).replace('.', '');
+}
+---
+
+<aside class="lg:sticky lg:top-24 space-y-12">
+  <div class="side-section">
+    <div class="side-section-label uppercase">recente</div>
+    <ol class="space-y-5">
+      {recentPosts.map((post: any, i: number) => {
+        const data = post.data;
+        const slug = post.slug ?? post.id;
+        const date = data.pubDate || data.date;
+        const num = String(i + 1).padStart(2, '0');
+        return (
+          <li>
+            <a href={`/${slug}`} class="group block">
+              <div class="flex items-baseline gap-3 mb-1">
+                <span class="mono text-ink-faint">{num}</span>
+                {date && <span class="mono text-ink-faint">{fmtDate(date)}</span>}
+              </div>
+              <h4 class="font-display text-[15px] font-medium leading-snug text-ink group-hover:text-primary transition-colors line-clamp-2">
+                {data.title}
+              </h4>
+            </a>
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+
+  {allCategories.length > 0 && (
+    <div class="side-section">
+      <div class="side-section-label uppercase">tópicos</div>
+      <ul class="flex flex-wrap gap-x-3 gap-y-2">
+        {allCategories.map((cat) => (
+          <li>
+            <a href={`/categoria/${cat.slug}`} class="mono text-ink-muted hover:text-ink transition-colors">
+              {cat.name.toLowerCase()}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {highlight && highlight.title && highlight.href && (
+    <div class="side-section">
+      <div class="side-section-label uppercase">{highlight.label || 'destaque'}</div>
+      <h3 class="font-display text-lg font-semibold text-ink leading-snug mb-2">
+        {highlight.title}
+      </h3>
+      {highlight.description && (
+        <p class="text-sm text-ink-muted leading-relaxed mb-3">
+          {highlight.description}
+        </p>
+      )}
+      <a href={highlight.href} class="mono text-ink hover:text-primary transition-colors inline-flex items-center gap-1.5 border-b border-ink hover:border-primary pb-0.5">
+        {highlight.cta || 'continuar'}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  )}
+</aside>

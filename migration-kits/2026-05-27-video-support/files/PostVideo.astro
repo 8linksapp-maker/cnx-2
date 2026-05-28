@@ -1,0 +1,175 @@
+---
+/**
+ * PostVideo.astro — embed responsivo de vídeo pra posts e landing pages.
+ *
+ * Aceita qualquer URL suportada por `parseVideoUrl`:
+ *   - YouTube (watch, shorts, youtu.be)
+ *   - Vimeo
+ *   - mp4 direto (self-hosted)
+ *   - iframe genérico (Loom, Wistia, etc)
+ *
+ * Renderiza com:
+ *   - aspect-ratio 16:9 fixo
+ *   - loading="lazy" no iframe (não carrega até scroll proximo)
+ *   - Lite mode (poster + click-to-play) opcional pra YouTube (economia de payload)
+ */
+import { parseVideoUrl } from '../../lib/videoEmbed';
+
+interface Props {
+  url: string;
+  title?: string;
+  description?: string;
+  uploadDate?: string;
+  /** Modo "lite": só carrega o iframe quando user clicar (economiza ~600KB no YT). Default false. */
+  lite?: boolean;
+  /** Emite VideoObject JSON-LD pra SEO. Default true. Setar false em instâncias inline duplicadas. */
+  emitSchema?: boolean;
+  /** classe extra pra wrapper */
+  class?: string;
+}
+
+const {
+  url,
+  title = '',
+  description = '',
+  uploadDate = '',
+  lite = false,
+  emitSchema = true,
+  class: extraClass = '',
+} = Astro.props;
+
+const info = parseVideoUrl(url);
+const showSchema = emitSchema && info.provider !== 'unknown' && info.provider !== 'mp4';
+
+const videoSchema = showSchema ? {
+  '@context': 'https://schema.org',
+  '@type': 'VideoObject',
+  name: title || 'Vídeo',
+  description: description || title || 'Vídeo do artigo',
+  ...(uploadDate ? { uploadDate } : {}),
+  ...(info.thumbnail ? { thumbnailUrl: info.thumbnail } : {}),
+  embedUrl: info.embedUrl,
+  ...(info.originalUrl ? { contentUrl: info.originalUrl } : {}),
+} : null;
+---
+
+{videoSchema && (
+  <script type="application/ld+json" set:html={JSON.stringify(videoSchema)} />
+)}
+
+{info.provider === 'unknown' ? null : (
+  <div class:list={['post-video', extraClass]} data-provider={info.provider}>
+    {info.provider === 'mp4' ? (
+      <video
+        controls
+        preload="metadata"
+        class="post-video-el"
+        aria-label={title || 'Vídeo do post'}
+      >
+        <source src={info.embedUrl} />
+        Seu navegador não suporta vídeo HTML5.
+      </video>
+    ) : lite && info.provider === 'youtube' ? (
+      <button
+        type="button"
+        class="post-video-lite"
+        data-embed-url={info.embedUrl}
+        aria-label={`Reproduzir vídeo: ${title || 'embed'}`}
+        style={`background-image: url(${info.thumbnail})`}
+      >
+        <span class="post-video-play" aria-hidden="true">
+          <svg width="68" height="48" viewBox="0 0 68 48" xmlns="http://www.w3.org/2000/svg">
+            <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#f00"/>
+            <path d="M45 24L27 14v20" fill="#fff"/>
+          </svg>
+        </span>
+      </button>
+    ) : (
+      <iframe
+        src={info.embedUrl}
+        title={title || 'Vídeo do post'}
+        loading="lazy"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        class="post-video-iframe"
+      />
+    )}
+  </div>
+)}
+
+<style>
+  .post-video {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+  .post-video-iframe,
+  .post-video-el {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  .post-video-el {
+    object-fit: contain;
+    background: #000;
+  }
+  .post-video-lite {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    background-size: cover;
+    background-position: center;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+  }
+  .post-video-lite::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.35) 100%);
+  }
+  .post-video-play {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.18s ease-out, opacity 0.18s;
+    opacity: 0.85;
+  }
+  .post-video-lite:hover .post-video-play {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+</style>
+
+<script is:inline>
+  // Lite mode: substitui o button por iframe ao clicar (não precisa de framework)
+  (function () {
+    document.querySelectorAll('.post-video-lite').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var embedUrl = btn.getAttribute('data-embed-url');
+        if (!embedUrl) return;
+        var iframe = document.createElement('iframe');
+        iframe.src = embedUrl + (embedUrl.indexOf('?') >= 0 ? '&' : '?') + 'autoplay=1';
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.className = 'post-video-iframe';
+        btn.replaceWith(iframe);
+      }, { once: true });
+    });
+  })();
+</script>

@@ -1,0 +1,151 @@
+---
+import { readData } from '../../lib/readData';
+import { normalizeCategories, collectOrphanCategories } from '../../lib/categorySlug';
+import { getCollection } from 'astro:content';
+
+const siteConfig = readData('siteConfig.json');
+const menuItems: any[] = readData('menu.json', { items: [] }).items || [];
+
+const posts = await getCollection('blog');
+const categoriesData = readData('categories.json', []);
+const registered = normalizeCategories(categoriesData);
+const postCats = [...new Set(posts.map(p => p.data.category).filter(Boolean))];
+const orphans = collectOrphanCategories(postCats, registered);
+const allCategories = registered.length > 0 ? [...registered, ...orphans] : orphans;
+
+const pathname = Astro.url.pathname;
+const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+---
+
+<header class="bg-bg/85 backdrop-blur-md text-ink sticky top-0 z-40 border-b border-rule">
+  <div class="container-x flex items-center justify-between h-[68px] gap-6">
+    <a href="/" class="flex items-baseline gap-3 no-underline" aria-label="Home">
+      {siteConfig.logo ? (
+        <img src={siteConfig.logo} alt={siteConfig.name} class="h-8 w-auto" />
+      ) : (
+        <>
+          <span class="font-display text-lg font-bold text-ink tracking-tight">{siteConfig.name}</span>
+          <span class="mono text-ink-faint hidden sm:inline">/ blog</span>
+        </>
+      )}
+    </a>
+
+    <nav class="hidden lg:flex items-center gap-7 flex-1 justify-center" aria-label="Principal">
+      {menuItems.map((item: any) => (
+        item.showCategories ? (
+          <div class="relative group">
+            <button
+              type="button"
+              class={`text-sm font-medium transition-colors flex items-center gap-1 ${isActive(item.href) ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              {item.label}
+              <svg width="10" height="10" viewBox="0 0 10 10" class="opacity-60" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+            <ul class="absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-[200px] bg-elev border border-rule rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 z-50 shadow-[0_8px_24px_-12px_rgba(80,40,20,0.18)]">
+              <li><a href={item.href} class="block px-4 py-2 text-sm text-ink hover:text-primary">Todos os artigos</a></li>
+              {allCategories.map((cat) => (
+                <li><a href={`/categoria/${cat.slug}`} class="block px-4 py-2 text-sm text-ink hover:text-primary">{cat.name}</a></li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <a
+            href={item.href}
+            aria-current={isActive(item.href) ? 'page' : undefined}
+            class={`text-sm font-medium transition-colors ${isActive(item.href) ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
+          >
+            {item.label}
+          </a>
+        )
+      ))}
+    </nav>
+
+    <div class="flex items-center gap-1">
+      <button id="search-toggle" class="w-10 h-10 flex items-center justify-center rounded text-ink-muted hover:text-ink hover:bg-bg transition-colors" aria-label="Buscar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button id="menu-toggle" class="lg:hidden w-10 h-10 flex items-center justify-center rounded text-ink-muted hover:text-ink hover:bg-bg transition-colors" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg id="menu-icon-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg id="menu-icon-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" class="hidden"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="search-popup" class="hidden fixed inset-0 bg-ink/95 backdrop-blur-md z-50 items-center justify-center p-6">
+    <button id="search-close" class="absolute top-6 right-6 text-white/70 hover:text-white" aria-label="Fechar busca">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <form action="/search" class="w-full max-w-2xl">
+      <label for="q" class="mono text-white/50 block mb-3">esc fecha</label>
+      <input id="q" type="search" name="q" placeholder="o que você procura?" class="w-full bg-transparent border-b border-white/20 focus:border-white/60 outline-none text-white text-3xl md:text-4xl font-display font-semibold py-3 placeholder:text-white/30 placeholder:font-normal tracking-tight" autofocus />
+    </form>
+  </div>
+
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-rule bg-bg">
+    <nav class="container-x py-4 space-y-1" aria-label="Mobile">
+      {menuItems.map((item: any) => (
+        <a
+          href={item.href}
+          aria-current={isActive(item.href) ? 'page' : undefined}
+          class={`block py-2.5 text-base ${isActive(item.href) ? 'text-ink font-semibold' : 'text-ink-muted'}`}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  </div>
+</header>
+
+<script is:inline>
+  (function() {
+    const toggle = document.getElementById('search-toggle');
+    const close  = document.getElementById('search-close');
+    const popup  = document.getElementById('search-popup');
+    if (toggle && close && popup) {
+      const openPopup = () => {
+        popup.classList.remove('hidden');
+        popup.classList.add('flex');
+        popup.querySelector('input')?.focus();
+      };
+      const closePopup = () => {
+        popup.classList.add('hidden');
+        popup.classList.remove('flex');
+        toggle.focus();
+      };
+
+      toggle.addEventListener('click', openPopup);
+      close.addEventListener('click', closePopup);
+
+      // Focus trap
+      popup.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { closePopup(); return; }
+        if (e.key !== 'Tab') return;
+        const focusable = Array.from(
+          popup.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])')
+        ).filter(el => !(el as HTMLElement).hasAttribute('disabled'));
+        const first = focusable[0] as HTMLElement;
+        const last  = focusable[focusable.length - 1] as HTMLElement;
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+        }
+      });
+    }
+    const menuBtn  = document.getElementById('menu-toggle');
+    const mobile   = document.getElementById('mobile-menu');
+    const iconOpen = document.getElementById('menu-icon-open');
+    const iconClose= document.getElementById('menu-icon-close');
+    if (menuBtn && mobile) {
+      menuBtn.addEventListener('click', () => {
+        const isOpen = !mobile.classList.contains('hidden');
+        mobile.classList.toggle('hidden');
+        menuBtn.setAttribute('aria-expanded', String(!isOpen));
+        iconOpen?.classList.toggle('hidden', !isOpen ? true : false);
+        iconClose?.classList.toggle('hidden', !isOpen ? false : true);
+      });
+    }
+  })();
+</script>

@@ -1,0 +1,303 @@
+/* ===========================================================
+   MSIA Scaffold — Light canvas + categoria-color system
+   Background warm off-white. 5 cores OKLCH committed nos blocos.
+   =========================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ===== Base canvas (light, warm off-white) ===== */
+    --c-bg:          250 248 244;     /* oklch(97% 0.008 80) — warm off-white */
+    --c-surface:     255 254 251;     /* essentially white, microtinted */
+    --c-elev:        244 240 232;     /* oklch(94% 0.012 80) — subtle elev */
+    --c-border:      224 218 206;     /* oklch(86% 0.014 80) */
+    --c-rule:        212 204 188;     /* oklch(81% 0.014 80) — divisores */
+
+    /* ===== Ink on light ===== */
+    --c-ink:           20  20  24;    /* oklch(15% 0.008 80) — deep ink */
+    --c-ink-muted:     76  74  82;    /* oklch(40% 0.012 80) */
+    --c-ink-faint:    136 130 130;    /* oklch(60% 0.014 80) */
+
+    /* ===== Primary (override CMS color) ===== */
+    --c-primary:      139  74  54;   /* oklch(45% 0.080 35) — coral-terra */
+    --c-primary-soft: 237 216 207;   /* oklch(88% 0.025 35) — coral-wash */
+
+    /* ===== 5 CATEGORIA COLORS (OKLCH committed) — SAME PALETTE =====
+       Funcionam tanto em light quanto dark — só o contraste muda. */
+    --cat-terracota:    197  92  62;   /* oklch(60% 0.16 30) — Comece aqui */
+    --cat-azul-tinta:    52  88 162;   /* oklch(42% 0.15 258) — Configuração */
+    --cat-oliva:         95 116  54;   /* oklch(48% 0.10 130) — Conteúdo */
+    --cat-ocre:         196 152  56;   /* oklch(68% 0.13 85) — Plugins */
+    --cat-vinho:        140  52  76;   /* oklch(42% 0.15 5) — Inspiração */
+
+    /* ===== Fonts ===== */
+    --font-display: 'Fraunces', 'Georgia', serif;
+    --font-body:    'Karla', system-ui, -apple-system, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgb(var(--c-ink-muted));
+    background: rgb(var(--c-bg));
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: rgb(var(--c-ink));
+    margin: 0;
+  }
+  /* Fraunces atenuada — presença editorial sem dominar */
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 1.875rem);
+    line-height: 1.15;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    line-height: 1.2;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+  /* Karla carrega tudo a partir do h3 */
+  h3 { font-family: var(--font-body); font-size: 1rem; line-height: 1.4; font-weight: 600; }
+  h4 { font-family: var(--font-body); font-size: 0.9375rem; line-height: 1.4; font-weight: 600; }
+
+  a { color: inherit; text-decoration: none; transition: color 0.15s ease; }
+
+  img, svg, video { max-width: 100%; height: auto; display: block; }
+
+  ::selection { background: rgb(var(--c-primary) / 0.18); color: rgb(var(--c-ink)); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: rgb(var(--c-bg)); }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--c-border)); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--c-rule)); }
+}
+
+@layer components {
+  .container-x {
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .container-x { padding-inline: 2.5rem; }
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-feature-settings: 'ss01';
+    letter-spacing: 0;
+  }
+
+  /* ===== COLOR BLOCK — o post como porta colorida =====
+     Em light theme os blocos ganham CONTRASTE máximo. Mais vibrante. */
+  .color-block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2rem;
+    color: rgb(248 248 246);
+    text-decoration: none;
+    overflow: hidden;
+    transition: filter 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    isolation: isolate;
+  }
+  .color-block:hover { filter: brightness(1.06) saturate(1.05); }
+  .color-block:active { transform: scale(0.995); }
+
+  /* numero gigante de fundo — texture sutil */
+  .color-block-num {
+    position: absolute;
+    bottom: -2rem;
+    right: -1.5rem;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(12rem, 28vw, 22rem);
+    line-height: 0.85;
+    color: rgba(255, 255, 255, 0.10);
+    pointer-events: none;
+    user-select: none;
+    z-index: -1;
+    letter-spacing: -0.05em;
+  }
+
+  /* size variants */
+  .color-block-lg { min-height: 60vh; padding: 3rem; }
+  .color-block-md { min-height: 32vh; }
+  @media (min-width: 768px) {
+    .color-block-lg { padding: 4rem; }
+    .color-block-md { min-height: 38vh; }
+  }
+
+  /* ===== Category bgs ===== */
+  .bg-cat-terracota { background: rgb(var(--cat-terracota)); }
+  .bg-cat-azul-tinta { background: rgb(var(--cat-azul-tinta)); }
+  .bg-cat-oliva { background: rgb(var(--cat-oliva)); }
+  .bg-cat-ocre { background: rgb(var(--cat-ocre)); color: rgb(20 20 24); }
+  .bg-cat-vinho { background: rgb(var(--cat-vinho)); }
+
+  /* ocre é claro, ink escuro pra WCAG */
+  .bg-cat-ocre .color-block-num { color: rgba(20, 20, 24, 0.10); }
+
+  /* category text colors (fora dos blocos) */
+  .text-cat-terracota { color: rgb(var(--cat-terracota)); }
+  .text-cat-azul-tinta { color: rgb(var(--cat-azul-tinta)); }
+  .text-cat-oliva { color: rgb(var(--cat-oliva)); }
+  .text-cat-ocre { color: rgb(var(--cat-ocre)); }
+  .text-cat-vinho { color: rgb(var(--cat-vinho)); }
+
+  /* ===== Sidebar items ===== */
+  .side-section + .side-section { margin-top: 3rem; }
+  .side-section-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: rgb(var(--c-ink-faint));
+    margin-bottom: 1rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid rgb(var(--c-rule));
+  }
+
+  /* ===== Buttons ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6875rem 1.125rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.875rem;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+    letter-spacing: -0.005em;
+  }
+  .btn-primary { background: rgb(var(--c-primary)); color: rgb(var(--c-bg)); }
+  .btn-primary:hover { filter: brightness(0.88); }
+  .btn-ghost {
+    background: transparent;
+    color: rgb(var(--c-ink));
+    border-color: rgb(var(--c-border));
+  }
+  .btn-ghost:hover { border-color: rgb(var(--c-ink)); }
+
+  /* ===== Prose (post content) — light mode ===== */
+  .prose-msia {
+    font-size: 1.125rem;
+    line-height: 1.78;
+    color: rgb(var(--c-ink-muted));
+    max-width: 68ch;
+  }
+  .prose-msia > p:first-of-type::first-letter {
+    font-family: var(--font-display);
+    font-size: 4.5em;
+    font-weight: 800;
+    line-height: 0.85;
+    float: left;
+    margin: 0.05em 0.08em 0 -0.04em;
+    color: rgb(var(--c-ink));
+    letter-spacing: -0.04em;
+  }
+  .prose-msia h2 { margin: 3rem 0 1rem; font-size: 1.875rem; letter-spacing: -0.022em; color: rgb(var(--c-ink)); }
+  .prose-msia h3 { margin: 2.25rem 0 0.75rem; font-size: 1.375rem; color: rgb(var(--c-ink)); }
+  .prose-msia p { margin-bottom: 1.25rem; }
+  .prose-msia p strong { color: rgb(var(--c-ink)); font-weight: 600; }
+  .prose-msia a {
+    color: rgb(var(--c-ink));
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: rgb(var(--c-rule));
+  }
+  .prose-msia a:hover { text-decoration-color: currentColor; }
+  .prose-msia blockquote {
+    border-left: 2px solid rgb(var(--c-ink));
+    padding: 0.25rem 0 0.25rem 1.5rem;
+    margin: 2.5rem 0;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    color: rgb(var(--c-ink));
+    font-weight: 500;
+    font-style: italic;
+    letter-spacing: -0.018em;
+  }
+  .prose-msia code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: 0.125em 0.375em;
+    background: rgb(var(--c-elev));
+    color: rgb(var(--c-ink));
+    border-radius: 2px;
+  }
+  .prose-msia pre {
+    background: rgb(var(--c-ink));
+    color: rgb(244 240 232);
+    padding: 1.25rem 1.5rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .prose-msia pre code { background: transparent; color: inherit; padding: 0; }
+  .prose-msia img { border-radius: 4px; margin: 2rem 0; }
+  .prose-msia ul, .prose-msia ol { padding-left: 1.5rem; margin: 1rem 0; }
+  .prose-msia li { margin-bottom: 0.5rem; }
+  .prose-msia hr { border: 0; border-top: 1px solid rgb(var(--c-rule)); margin: 3rem 0; }
+
+  /* listicle items */
+  .prose-msia .listicle-item {
+    border-top: 1px solid rgb(var(--c-rule));
+    padding-top: 2rem;
+    margin-top: 3rem;
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

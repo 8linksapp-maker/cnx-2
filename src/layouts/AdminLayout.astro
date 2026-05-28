@@ -1,0 +1,244 @@
+---
+export const prerender = false;
+import AdminNav from '../components/admin/AdminNav';
+import CmsToaster from '../components/admin/CmsToaster';
+import DeployManager from '../components/admin/DeployManager';
+import '../styles/admin.css';
+
+interface Props {
+    title?: string;
+    activeSection?: string;
+}
+const { title = 'Admin', activeSection = '' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} — Admin</title>
+    <style is:global>
+        /* ============================================================
+           Quill — estilo Café-da-Tarde (WYSIWYG fiel ao site público)
+           ============================================================ */
+
+        /* Toolbar */
+        .ql-toolbar.ql-snow {
+            border-radius: 8px 8px 0 0 !important;
+            border-color: rgb(224 218 206) !important;
+            background: rgb(244 240 232);
+            padding: 8px 12px;
+        }
+        .ql-toolbar.ql-snow .ql-formats {
+            margin-right: 12px;
+        }
+        .ql-toolbar.ql-snow button,
+        .ql-toolbar.ql-snow .ql-picker-label {
+            border-radius: 4px;
+            transition: background-color 0.15s ease;
+        }
+        .ql-toolbar.ql-snow button:hover,
+        .ql-toolbar.ql-snow .ql-picker-label:hover,
+        .ql-toolbar.ql-snow button:focus {
+            background: rgb(237 216 207) !important;
+            color: rgb(139 74 54) !important;
+        }
+        .ql-toolbar.ql-snow button.ql-active,
+        .ql-toolbar.ql-snow .ql-picker-label.ql-active,
+        .ql-toolbar.ql-snow .ql-picker-item.ql-selected {
+            color: rgb(139 74 54) !important;
+            background: rgb(237 216 207) !important;
+        }
+        .ql-toolbar.ql-snow .ql-stroke {
+            stroke: rgb(76 74 82);
+        }
+        .ql-toolbar.ql-snow .ql-fill {
+            fill: rgb(76 74 82);
+        }
+        .ql-toolbar.ql-snow button:hover .ql-stroke,
+        .ql-toolbar.ql-snow button.ql-active .ql-stroke,
+        .ql-toolbar.ql-snow .ql-picker-label:hover .ql-stroke,
+        .ql-toolbar.ql-snow .ql-picker-label.ql-active .ql-stroke {
+            stroke: rgb(139 74 54) !important;
+        }
+        .ql-toolbar.ql-snow button:hover .ql-fill,
+        .ql-toolbar.ql-snow button.ql-active .ql-fill,
+        .ql-toolbar.ql-snow .ql-picker-label:hover .ql-fill,
+        .ql-toolbar.ql-snow .ql-picker-label.ql-active .ql-fill {
+            fill: rgb(139 74 54) !important;
+        }
+        .ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-label::before,
+        .ql-toolbar.ql-snow .ql-picker.ql-header .ql-picker-item::before {
+            font-family: 'Karla', system-ui, sans-serif;
+        }
+        .ql-snow .ql-picker-options {
+            background: rgb(255 254 251);
+            border-color: rgb(224 218 206) !important;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(80, 40, 20, 0.12);
+        }
+
+        /* Container */
+        .ql-container.ql-snow {
+            border-radius: 0 0 8px 8px !important;
+            border-color: rgb(224 218 206) !important;
+            min-height: 480px;
+            background: rgb(255 254 251);
+        }
+
+        /* Editor — tipografia WYSIWYG matching o site */
+        .ql-editor {
+            font-family: 'Karla', system-ui, sans-serif;
+            font-size: 17px;
+            line-height: 1.7;
+            color: rgb(20 20 24);
+            padding: 28px 32px;
+            min-height: 480px;
+        }
+        .ql-editor.ql-blank::before {
+            color: rgb(136 130 130);
+            font-style: normal;
+            font-family: 'Karla', system-ui, sans-serif;
+            font-size: 17px;
+            left: 32px;
+            right: 32px;
+        }
+
+        /* Headings com tipografia editorial — mesma fonte do site */
+        .ql-editor h1 {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            color: rgb(20 20 24);
+            margin: 1.5rem 0 0.75rem;
+        }
+        .ql-editor h2 {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.015em;
+            color: rgb(20 20 24);
+            margin: 1.75rem 0 0.625rem;
+        }
+        .ql-editor h3 {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            line-height: 1.3;
+            color: rgb(20 20 24);
+            margin: 1.5rem 0 0.5rem;
+        }
+        .ql-editor h4 {
+            font-family: 'Karla', system-ui, sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.4;
+            color: rgb(20 20 24);
+            margin: 1.25rem 0 0.5rem;
+        }
+
+        .ql-editor p {
+            margin: 0 0 0.875rem;
+        }
+        .ql-editor a {
+            color: rgb(139 74 54);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .ql-editor a:hover {
+            color: rgb(101 53 39);
+        }
+        .ql-editor strong {
+            font-weight: 700;
+            color: rgb(20 20 24);
+        }
+        .ql-editor em {
+            font-style: italic;
+        }
+        .ql-editor blockquote {
+            border-left: 3px solid rgb(139 74 54);
+            padding: 0.5rem 0 0.5rem 1.25rem;
+            margin: 1.25rem 0;
+            font-style: italic;
+            color: rgb(76 74 82);
+            font-size: 1.1rem;
+        }
+        .ql-editor ul,
+        .ql-editor ol {
+            padding-left: 1.5rem;
+            margin: 0.75rem 0;
+        }
+        .ql-editor li {
+            margin: 0.375rem 0;
+        }
+        .ql-editor li::marker {
+            color: rgb(139 74 54);
+        }
+        .ql-editor pre,
+        .ql-editor .ql-code-block-container {
+            background: rgb(20 20 24);
+            color: rgb(244 240 232);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 1rem 0;
+        }
+        .ql-editor code {
+            background: rgb(244 240 232);
+            color: rgb(139 74 54);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 0.85em;
+        }
+        .ql-editor img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 1rem 0;
+            box-shadow: 0 1px 2px rgba(80, 40, 20, 0.06);
+        }
+        .ql-editor hr {
+            border: none;
+            border-top: 1px solid rgb(224 218 206);
+            margin: 2rem 0;
+        }
+
+        /* Tooltip de link */
+        .ql-snow .ql-tooltip {
+            border-radius: 6px;
+            border-color: rgb(224 218 206) !important;
+            background: rgb(255 254 251);
+            box-shadow: 0 8px 24px rgba(80, 40, 20, 0.12);
+            color: rgb(20 20 24);
+        }
+        .ql-snow .ql-tooltip input[type=text] {
+            border-color: rgb(224 218 206) !important;
+            border-radius: 4px;
+            color: rgb(20 20 24);
+        }
+        .ql-snow .ql-tooltip a.ql-action::after {
+            border-color: rgb(224 218 206);
+        }
+    </style>
+</head>
+<body class="bg-bg min-h-screen">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <AdminNav client:load activeSection={activeSection} />
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 min-w-0 ml-64" tabindex="-1">
+            <div class="p-8">
+                <DeployManager client:load />
+                <slot />
+            </div>
+        </main>
+    </div>
+    <CmsToaster client:load />
+</body>
+</html>

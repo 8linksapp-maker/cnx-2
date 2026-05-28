@@ -1,0 +1,32 @@
+{
+    "name": "msia-scaffold",
+    "description": "MSIA Scaffold — base completa pra criar blogs com IA (Astro + admin + 14 plugins + tema moderno Marketer-inspired)",
+    "type": "module",
+    "version": "0.1.0",
+    "scripts": {
+        "dev": "astro dev",
+        "build": "astro build",
+        "preview": "astro preview",
+        "astro": "astro"
+    },
+    "dependencies": {
+        "@astrojs/react": "^4.0.0",
+        "@astrojs/sitemap": "^3.0.0",
+        "@astrojs/tailwind": "^6.0.2",
+        "@astrojs/vercel": "^8.0.0",
+        "@tailwindcss/typography": "^0.5.15",
+        "astro": "^5.1.0",
+        "fast-xml-parser": "^5.5.9",
+        "jszip": "^3.10.1",
+        "lucide-react": "^0.468.0",
+        "marked": "^15.0.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-quill-new": "^3.3.3",
+        "tailwindcss": "^3"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.0",
+        "@types/react-dom": "^18.3.0"
+    }
+}

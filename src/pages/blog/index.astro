@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/ui/PostCard.astro';
+import { getCollection } from 'astro:content';
+import { CATEGORY_ORDER } from '../../lib/categoryColors';
+
+const allPosts = await getCollection('blog');
+
+function orderForCategory(cat: string | undefined) {
+  if (!cat) return 999;
+  const idx = CATEGORY_ORDER.indexOf(cat);
+  return idx >= 0 ? idx : 999;
+}
+
+const posts = allPosts.sort((a: any, b: any) => {
+  const oa = orderForCategory(a.data.category);
+  const ob = orderForCategory(b.data.category);
+  if (oa !== ob) return oa - ob;
+  return new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime();
+});
+---
+
+<BaseLayout title="Todos os artigos" description="Arquivo completo">
+  <section class="border-b border-rule">
+    <div class="container-x pt-16 md:pt-24 pb-12">
+      <p class="mono uppercase text-ink-faint mb-5">arquivo</p>
+      <h1 class="font-display text-5xl md:text-7xl font-extrabold tracking-tight text-ink leading-[0.95] mb-4">
+        Todos os artigos
+      </h1>
+      <p class="mono text-ink-faint">{posts.length} {posts.length === 1 ? 'publicado' : 'publicados'}</p>
+    </div>
+  </section>
+
+  <div class="container-x py-10 md:py-14">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+      {posts.map((post: any, i: number) => (
+        <PostCard post={post} index={i} />
+      ))}
+    </div>
+  </div>
+</BaseLayout>
