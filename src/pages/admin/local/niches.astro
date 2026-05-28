@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import NichesManager from '../../../components/admin/local/NichesManager';
+---
+<AdminLayout title="Nichos" activeSection="local-niches">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-ink">Nichos</h1>
+        <p class="text-ink-muted mt-1">Agrupe seus serviços por tema e defina a cor das páginas de cada um.</p>
+    </div>
+    <NichesManager client:load />
+</AdminLayout>

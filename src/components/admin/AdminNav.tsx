@@ -3,6 +3,7 @@ import {
     FileText, Tag, Users, Info, Phone,
     Shield, Settings, LogOut, ExternalLink, Navigation,
     Package, FileArchive, PenLine, ChevronRight, Home, Sparkles,
+    Layers,
 } from 'lucide-react';
 
 interface NavItem {
@@ -13,6 +14,11 @@ interface NavItem {
 }
 
 const contentSections = ['posts', 'categories', 'authors'];
+
+// Site Local — gerador de páginas de SEO (cidade × serviço). Itens adicionados por fatia.
+const localItems: NavItem[] = [
+    { label: 'Nichos', href: '/admin/local/niches', icon: Layers, section: 'local-niches' },
+];
 
 const pageItems: NavItem[] = [
     { label: 'Navegação do site', href: '/admin/menu', icon: Navigation, section: 'menu' },
@@ -126,6 +132,14 @@ export default function AdminNav({ activeSection = '', extraItems = [] }: AdminN
                 <div className="mb-5" role="group" aria-labelledby="nav-paginas">
                     <p id="nav-paginas" className="text-[10px] font-bold text-ink-faint uppercase tracking-widest px-3 mb-1.5">Páginas</p>
                     {pageItems.map(item => (
+                        <NavLink key={item.href} item={item} active={activeSection === item.section} />
+                    ))}
+                </div>
+
+                {/* Site Local */}
+                <div className="mb-5" role="group" aria-labelledby="nav-local">
+                    <p id="nav-local" className="text-[10px] font-bold text-ink-faint uppercase tracking-widest px-3 mb-1.5">Site Local</p>
+                    {localItems.map(item => (
                         <NavLink key={item.href} item={item} active={activeSection === item.section} />
                     ))}
                 </div>
