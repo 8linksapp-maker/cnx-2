@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Moema",
+    "slug": "moema",
+    "state": "SP",
+    "city": "São Paulo",
+    "citySlug": "sao-paulo",
+    "type": "bairro",
+    "active": true
+  },
+  {
+    "name": "São Paulo",
+    "slug": "sao-paulo",
+    "state": "SP",
+    "city": "São Paulo",
+    "citySlug": "sao-paulo",
+    "type": "cidade",
+    "active": true
+  }
+]

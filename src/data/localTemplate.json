@@ -1,0 +1,12 @@
+{
+  "heroTitle": "{servico} em {cidade} - {estado}",
+  "heroSubtitle": "Atendimento profissional de {servico} em {cidade}. Rápido, confiável e com orçamento sem compromisso.",
+  "pageContent": "Procurando {servico} em {cidade}? A {empresa} oferece atendimento de qualidade em toda a região de {cidade}, {estado}. Fale com a gente pelo telefone {telefone}.",
+  "benefits": [
+    "Atendimento rápido em {cidade}",
+    "Orçamento gratuito",
+    "Garantia nos serviços"
+  ],
+  "metaTitle": "{servico} em {cidade} | {empresa}",
+  "metaDescription": "Precisa de {servico} em {cidade}? Orçamento grátis e atendimento rápido. Fale com a {empresa}."
+}

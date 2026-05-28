@@ -1,0 +1,16 @@
+[
+  {
+    "title": "Aluguel de Andaime",
+    "slug": "aluguel-de-andaime",
+    "shortDescription": "Andaimes metálicos para obras e fachadas",
+    "icon": "🪜",
+    "niche": "aluguel-andaime",
+    "outline": [
+      { "level": "h2", "text": "Por que escolher" },
+      { "level": "h2", "text": "Como funciona a locação" }
+    ],
+    "generatedContent": "## {servico} em {cidade}\n\nProcurando **{servico} em {cidade}, {estado}**? A {empresa} atende toda a região de {cidade} com andaimes metálicos certificados, montagem rápida e preço justo.\n\n## Por que escolher a {empresa}\n\n- Entrega e retirada em {cidade}\n- Orçamento sem compromisso\n- Equipamentos revisados e dentro da norma\n- Atendimento por telefone e WhatsApp\n\n## Como funciona a locação\n\nVocê informa a metragem e o prazo, a gente leva o andaime até a obra em {cidade} e cuida da montagem. No fim do período, retiramos tudo.\n\nFale com a {empresa} pelo telefone {telefone}.",
+    "contentGeneratedAt": "2026-05-28",
+    "active": true
+  }
+]

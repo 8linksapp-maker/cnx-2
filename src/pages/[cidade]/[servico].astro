@@ -1,0 +1,181 @@
+---
+/**
+ * [cidade]/[servico].astro — Página de SEO local (Tema Local).
+ *
+ * SSG puro: getStaticPaths gera UMA página por combo serviço×localidade ativo.
+ * O conteúdo do serviço é parametrizado ({cidade}/{servico}/...) e resolvido aqui
+ * em build-time via applyTemplateVars. Cor do nicho injetada inline (--niche).
+ *
+ * 404 natural: combos inativos nem entram em getStaticPaths.
+ *
+ * NOTA (Fatia 0): estrutura funcional + a11y básica. A fidelidade visual
+ * (tokens Café-da-Tarde, microinteração, hierarquia) é do Leonardo no polish.
+ */
+import { marked } from 'marked';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { readData } from '../../lib/readData';
+import { applyTemplateVars, buildTemplateVars } from '../../lib/localVars';
+import type { Niche, Service, Location, LocalTemplate, LocalBusiness } from '../../lib/localTypes';
+
+export async function getStaticPaths() {
+  const services = readData<Service[]>('services.json', []).filter((s) => s.active);
+  const locations = readData<Location[]>('locations.json', []).filter(
+    (l) => l.active || l.type === 'cidade',
+  );
+
+  const paths: any[] = [];
+  for (const loc of locations) {
+    for (const svc of services) {
+      paths.push({ params: { cidade: loc.slug, servico: svc.slug }, props: { loc, svc } });
+    }
+  }
+  // Visibilidade do teto de build-time (ver gotcha #1 do handoff do Leonardo).
+  console.log(`[tema-local] ${paths.length} páginas geradas (${services.length} serviços × ${locations.length} localidades)`);
+  return paths;
+}
+
+const { loc, svc } = Astro.props as { loc: Location; svc: Service };
+
+const niches = readData<Niche[]>('nichos.json', []);
+const tpl = readData<LocalTemplate>('localTemplate.json', {});
+const biz = readData<LocalBusiness>('localBusiness.json', {} as LocalBusiness);
+
+const niche = niches.find((n) => n.slug === svc.niche);
+const nicheColor = niche?.color || '#8b4a36';
+
+const vars = buildTemplateVars(loc, svc, biz);
+
+// Conteúdo: usa o gerado pelo serviço; senão cai no template fallback.
+const rawContent = svc.generatedContent?.trim() || tpl.pageContent || '';
+const content = applyTemplateVars(rawContent, vars);
+
+marked.setOptions({ gfm: true, breaks: true });
+const contentHtml = content ? String(marked.parse(content)) : '';
+
+const heroTitle = applyTemplateVars(tpl.heroTitle || '{servico} em {cidade} - {estado}', vars);
+const heroSubtitle = applyTemplateVars(tpl.heroSubtitle || '', vars);
+const metaTitle = applyTemplateVars(tpl.metaTitle || '{servico} em {cidade}', vars);
+const metaDescription = applyTemplateVars(tpl.metaDescription || heroSubtitle, vars);
+
+// Escolhe texto claro ou escuro sobre a cor do nicho (a11y — contraste WCAG).
+function textOnColor(hex: string): 'light' | 'dark' {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return 'light';
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.4 ? 'dark' : 'light';
+}
+const heroInk = textOnColor(nicheColor);
+
+// CTAs de contato.
+const waNumber = (biz.whatsapp || '').replace(/\D/g, '');
+const waText = encodeURIComponent(
+  `${biz.whatsappMessage || 'Olá! Vim pelo site e gostaria de um orçamento.'} (${svc.title} em ${loc.name})`,
+);
+const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waText}` : '';
+const phoneHref = biz.phone ? `tel:${biz.phone.replace(/[^\d+]/g, '')}` : '';
+
+const heroStyle = `--niche: ${nicheColor};`;
+---
+
+<BaseLayout title={metaTitle} description={metaDescription} type="article">
+  <article>
+    <!-- HERO — cor do nicho via --niche -->
+    <header
+      class:list={['relative isolate overflow-hidden', heroInk === 'dark' ? 'text-ink' : 'text-white']}
+      style={`${heroStyle} background-color: var(--niche);`}
+    >
+      <div class="container-x pt-14 md:pt-20 pb-16 md:pb-20">
+        <nav class="mono text-sm opacity-80 mb-8 flex flex-wrap items-center gap-2" aria-label="Você está em">
+          <a href="/" class="hover:opacity-100 transition-opacity">início</a>
+          <span aria-hidden="true" class="opacity-60">/</span>
+          <span>{loc.name}</span>
+          <span aria-hidden="true" class="opacity-60">/</span>
+          <span class="opacity-100">{svc.title}</span>
+        </nav>
+
+        <p class="mono uppercase text-sm tracking-wide opacity-80 mb-3">
+          {svc.icon && <span class="mr-1">{svc.icon}</span>}
+          {loc.name}{loc.city && loc.city !== loc.name ? ` · ${loc.city}` : ''} — {loc.state}
+        </p>
+
+        <h1 class="font-display text-3xl md:text-4xl lg:text-5xl leading-tight tracking-tight max-w-3xl mb-5">
+          {heroTitle}
+        </h1>
+
+        {heroSubtitle && (
+          <p class="text-lg md:text-xl leading-snug max-w-2xl opacity-90 mb-8">{heroSubtitle}</p>
+        )}
+
+        <div class="flex flex-wrap gap-3">
+          {waUrl && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded bg-white text-ink font-semibold no-underline hover:opacity-90 transition-opacity"
+            >
+              Pedir orçamento no WhatsApp
+            </a>
+          )}
+          {phoneHref && (
+            <a
+              href={phoneHref}
+              class:list={[
+                'inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded border font-semibold no-underline transition-colors',
+                heroInk === 'dark' ? 'border-ink/40 hover:border-ink' : 'border-white/50 hover:border-white',
+              ]}
+            >
+              Ligar: {biz.phone}
+            </a>
+          )}
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <div class="container-x py-12 md:py-16">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div class="lg:col-span-8">
+          {contentHtml ? (
+            <div class="prose-msia max-w-none" set:html={contentHtml} />
+          ) : (
+            <p class="text-ink-muted">{svc.title} em {loc.name}. Entre em contato para saber mais.</p>
+          )}
+        </div>
+
+        <!-- Sidebar de contato -->
+        <aside class="lg:col-span-4">
+          <div class="bg-surface border border-border rounded-md p-6 lg:sticky lg:top-6">
+            <p class="mono uppercase text-sm text-ink-faint mb-1">Orçamento gratuito</p>
+            <h2 class="font-display text-xl leading-snug mb-4">{svc.title} em {loc.name}</h2>
+            <div class="flex flex-col gap-2">
+              {waUrl && (
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center min-h-[44px] px-4 py-3 rounded bg-primary text-bg font-semibold no-underline hover:brightness-90 transition-[filter]"
+                >
+                  Falar no WhatsApp
+                </a>
+              )}
+              {phoneHref && (
+                <a
+                  href={phoneHref}
+                  class="inline-flex items-center justify-center min-h-[44px] px-4 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors"
+                >
+                  Ligar: {biz.phone}
+                </a>
+              )}
+            </div>
+            {biz.companyName && (
+              <p class="mt-4 text-sm text-ink-faint">{biz.companyName}</p>
+            )}
+          </div>
+        </aside>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
