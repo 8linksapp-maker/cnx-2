@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import LocalTemplateEditor from '../../../components/admin/local/LocalTemplateEditor';
+---
+<AdminLayout title="Modelo de página" activeSection="local-template">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-ink">Modelo de página</h1>
+        <p class="text-ink-muted mt-1">Dados da sua empresa e o texto padrão das páginas que ainda não têm conteúdo próprio.</p>
+    </div>
+    <LocalTemplateEditor client:load />
+</AdminLayout>
