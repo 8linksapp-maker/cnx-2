@@ -1,0 +1,150 @@
+---
+/**
+ * LocalHome.astro — Home do site local (orientada a serviço, não blog).
+ *
+ * Lista serviços (com a cor do nicho) e a área de cobertura. Cada serviço
+ * aponta pra página da localidade principal: /{cidadePrincipal}/{servico}.
+ * Astro puro, zero React (regra do scaffold pro frontend público).
+ *
+ * NOTA: estrutura funcional + a11y básica. Polish visual/hierarquia é do Leonardo.
+ */
+import { readData } from '../../lib/readData';
+import type { Niche, Service, Location, LocalBusiness } from '../../lib/localTypes';
+
+const services = readData<Service[]>('services.json', []).filter((s) => s.active !== false);
+const locations = readData<Location[]>('locations.json', []);
+const niches = readData<Niche[]>('nichos.json', []);
+const biz = readData<LocalBusiness>('localBusiness.json', {} as LocalBusiness);
+const siteConfig = readData('siteConfig.json');
+
+const builtLocations = locations.filter((l) => l.active !== false || l.type === 'cidade');
+// Localidade principal pros links dos serviços: prefere uma cidade ativa, senão a primeira publicável.
+const principalLoc =
+  builtLocations.find((l) => l.type === 'cidade') || builtLocations[0] || null;
+
+const cities = builtLocations.filter((l) => l.type === 'cidade');
+const coverage = builtLocations;
+
+const nicheOf = (slug: string) => niches.find((n) => n.slug === slug);
+const company = biz.companyName || siteConfig.name || 'Minha Empresa';
+
+const waNumber = (biz.whatsapp || '').replace(/\D/g, '');
+const waUrl = waNumber
+  ? `https://wa.me/${waNumber}?text=${encodeURIComponent(biz.whatsappMessage || 'Olá! Vim pelo site e gostaria de um orçamento.')}`
+  : '';
+const phoneHref = biz.phone ? `tel:${biz.phone.replace(/[^\d+]/g, '')}` : '';
+
+const serviceHref = (svc: Service) => (principalLoc ? `/${principalLoc.slug}/${svc.slug}` : '#');
+const empty = services.length === 0 || builtLocations.length === 0;
+---
+
+<!-- HERO -->
+<section class="border-b border-rule">
+  <div class="container-x pt-16 md:pt-24 pb-14 md:pb-20">
+    <p class="mono uppercase text-ink-faint mb-6">{company}{cities[0] ? ` · ${cities[0].name}` : ''}</p>
+    <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-normal text-ink leading-[1.0] tracking-tight max-w-3xl">
+      {siteConfig.description || `${company}: atendimento profissional perto de você.`}
+    </h1>
+    {(waUrl || phoneHref) && (
+      <div class="flex flex-wrap gap-3 mt-8">
+        {waUrl && (
+          <a href={waUrl} target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded bg-primary text-bg font-semibold no-underline hover:brightness-90 transition-[filter]">
+            Pedir orçamento no WhatsApp
+          </a>
+        )}
+        {phoneHref && (
+          <a href={phoneHref}
+            class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors">
+            Ligar: {biz.phone}
+          </a>
+        )}
+      </div>
+    )}
+  </div>
+</section>
+
+{empty ? (
+  <div class="container-x py-32">
+    <p class="mono uppercase text-ink-faint mb-3">comece aqui</p>
+    <h2 class="font-display text-3xl text-ink mb-3">Seu site local ainda está vazio.</h2>
+    <p class="text-ink-muted">
+      Cadastre serviços e localidades em
+      <a href="/admin/local/services" class="text-primary underline underline-offset-4">Site Local</a>
+      e publique pra gerar as páginas.
+    </p>
+  </div>
+) : (
+  <>
+    <!-- SERVIÇOS -->
+    <section class="border-b border-rule">
+      <div class="container-x py-12 md:py-16">
+        <p class="mono uppercase text-ink-faint mb-8">nossos serviços</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {services.map((svc) => {
+            const niche = nicheOf(svc.niche);
+            return (
+              <a href={serviceHref(svc)}
+                class="group rounded-md p-6 flex flex-col justify-between min-h-[11rem] text-white no-underline transition-[filter] hover:brightness-[1.06]"
+                style={`background-color: ${niche?.color || 'rgb(var(--c-primary))'}`}>
+                <div>
+                  {svc.icon && <span class="text-2xl block mb-3" aria-hidden="true">{svc.icon}</span>}
+                  <h3 class="font-display text-xl md:text-2xl leading-tight tracking-tight">{svc.title}</h3>
+                  {svc.shortDescription && <p class="text-sm opacity-90 mt-2 leading-relaxed">{svc.shortDescription}</p>}
+                </div>
+                <span class="mono uppercase text-sm mt-5 inline-flex items-center gap-2 self-start border-b border-current pb-1 group-hover:gap-3 transition-all">
+                  ver detalhes
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+
+    <!-- COBERTURA -->
+    {coverage.length > 0 && (
+      <section class="border-b border-rule">
+        <div class="container-x py-12 md:py-16">
+          <p class="mono uppercase text-ink-faint mb-3">onde atendemos</p>
+          <h2 class="font-display text-2xl md:text-3xl text-ink mb-6">Áreas de atendimento</h2>
+          <ul class="flex flex-wrap gap-2">
+            {coverage.map((loc) => (
+              <li>
+                <a href={services[0] ? `/${loc.slug}/${services[0].slug}` : '#'}
+                  class="inline-block px-3 py-2 rounded border border-border text-sm text-ink-muted hover:border-ink hover:text-ink no-underline transition-colors">
+                  {loc.name} <span class="mono text-xs text-ink-faint">· {loc.state}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
+
+    <!-- CTA FINAL -->
+    {(waUrl || phoneHref) && (
+      <section class="border-b border-rule">
+        <div class="container-x py-14 md:py-20 text-center">
+          <h2 class="font-display text-2xl md:text-3xl text-ink mb-2">Precisa de um orçamento?</h2>
+          <p class="text-ink-muted mb-8">Atendimento rápido, sem compromisso.</p>
+          <div class="flex flex-wrap gap-3 justify-center">
+            {waUrl && (
+              <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded bg-primary text-bg font-semibold no-underline hover:brightness-90 transition-[filter]">
+                Falar no WhatsApp
+              </a>
+            )}
+            {phoneHref && (
+              <a href={phoneHref}
+                class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors">
+                Ligar: {biz.phone}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
+  </>
+)}
