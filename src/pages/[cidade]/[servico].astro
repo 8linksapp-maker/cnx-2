@@ -105,10 +105,10 @@ const faqSchema = faqItems.length > 0 ? {
       {heroImg && <img src={heroImg} alt="" aria-hidden="true" class="absolute inset-0 -z-30 w-full h-full object-cover" />}
       <div aria-hidden="true" class="absolute inset-0 -z-10"
         style={heroImg
-          ? 'background: linear-gradient(180deg, rgb(8 8 10 / 0.55) 0%, rgb(8 8 10 / 0.72) 100%);'
+          ? 'background: linear-gradient(180deg, rgb(10 10 12 / 0.70) 0%, rgb(10 10 12 / 0.84) 100%);'
           : 'background-color: rgb(20 20 24 / 0.16);'}></div>
 
-      <div class="container-x pt-14 md:pt-20 pb-14 md:pb-20 relative">
+      <div class="container-x pt-14 md:pt-20 pb-14 md:pb-20 relative" style={heroImg ? 'text-shadow: 0 1px 14px rgb(0 0 0 / 0.5);' : ''}>
         <nav class="mono text-sm opacity-80 mb-8 flex flex-wrap items-center gap-2" aria-label="Você está em">
           <a href="/" class="hover:opacity-100 transition-opacity" style="color: inherit;">início</a>
           <span aria-hidden="true" class="opacity-60">/</span>
