@@ -3,20 +3,21 @@
  * LocalHome.astro — Home do site local (orientada a serviço, não blog).
  *
  * Estrutura rank-and-rent (modelo que posiciona no Google):
- *   hero c/ CTA centralizado → serviços (grid 3 col) → quem somos →
- *   onde atendemos (links internos p/ SEO) → contato + mapa.
+ *   hero c/ CTA + provas de confiança → benefícios → serviços → como funciona →
+ *   quem somos (c/ card de atendimento) → onde atendemos (links SEO) → contato + mapa →
+ *   faixa de CTA final. Fundos alternam (surface/bg/elev) pra dar ritmo e profundidade.
  * Header/rodapé vêm do BaseLayout. Astro puro, zero React no público.
- *
- * NOTA: estrutura funcional + a11y básica. Polish visual/hierarquia é do Leonardo.
  */
 import { readData } from '../../lib/readData';
 import { pickInk } from '../../lib/contrastInk';
-import type { Niche, Service, Location, LocalBusiness } from '../../lib/localTypes';
+import { applyTemplateVars } from '../../lib/localVars';
+import type { Niche, Service, Location, LocalBusiness, LocalTemplate } from '../../lib/localTypes';
 
 const services = readData<Service[]>('services.json', []).filter((s) => s.active !== false);
 const locations = readData<Location[]>('locations.json', []);
 const niches = readData<Niche[]>('nichos.json', []);
 const biz = readData<LocalBusiness>('localBusiness.json', {} as LocalBusiness);
+const tpl = readData<LocalTemplate>('localTemplate.json', {});
 const siteConfig = readData('siteConfig.json');
 
 const builtLocations = locations.filter((l) => l.active !== false || l.type === 'cidade');
@@ -24,6 +25,21 @@ const builtLocations = locations.filter((l) => l.active !== false || l.type === 
 const principalLoc =
   builtLocations.find((l) => l.type === 'cidade') || builtLocations[0] || null;
 const cities = builtLocations.filter((l) => l.type === 'cidade');
+const region = principalLoc?.name || cities[0]?.name || '';
+
+// Hero: drenado na cor do nicho principal (customizável) ou foto de fundo (quando houver).
+const heroColor = services[0]?.color || niches.find((n) => n.slug === services[0]?.niche)?.color || niches[0]?.color || '#8b4a36';
+const heroImg = biz.heroImage || '';
+const heroInk = heroImg ? 'rgb(248 248 246)' : pickInk(heroColor).color;
+const heroInitial = ((biz.companyName || siteConfig.name || 'A').trim()[0] || 'A').toUpperCase();
+
+// A cor do site = cor do nicho (customizável). Vira o accent de tudo (hero, CTA, detalhes).
+const rgba = (hex: string, a: number) => {
+  const h = hex.replace('#', '');
+  return `rgba(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}, ${a})`;
+};
+const accent = heroColor;
+const accentInk = pickInk(accent).color;
 
 const nicheOf = (slug: string) => niches.find((n) => n.slug === slug);
 const company = biz.companyName || siteConfig.name || 'Minha Empresa';
@@ -41,6 +57,29 @@ const heroTitle = biz.homeTitle || siteConfig.description || `${company}: atendi
 const heroSubtitle = biz.homeSubtitle || '';
 const aboutParas = (biz.aboutText || '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 
+// Benefícios vêm do modelo de página (parametrizados); na home resolvemos pra cidade principal.
+const homeVars: Record<string, string> = {
+  cidade: region || 'sua região',
+  estado: principalLoc?.state || '',
+  bairro: region,
+  servico: services[0]?.title || 'nossos serviços',
+  empresa: company,
+  telefone: biz.phone || '',
+};
+const benefits = (tpl.benefits || []).map((b) => applyTemplateVars(b, homeVars)).filter(Boolean);
+
+const trust = [
+  'Orçamento sem compromisso',
+  region ? `Atendemos ${region} e região` : 'Atendimento na sua região',
+  'Resposta rápida no WhatsApp',
+];
+
+const steps = [
+  { n: '1', t: 'Você pede o orçamento', d: 'Fale com a gente pelo WhatsApp ou telefone e conte o que você precisa.' },
+  { n: '2', t: 'A gente combina tudo', d: 'Confirmamos prazo, valor e detalhes, sem compromisso nenhum.' },
+  { n: '3', t: 'Atendemos você', d: region ? `Atendimento em ${region} e região, no horário combinado.` : 'Atendimento na sua região, no horário combinado.' },
+];
+
 // Extrai o src do embed do Google Maps (aceita URL pura ou o <iframe> colado).
 function mapSrc(raw?: string): string {
   if (!raw) return '';
@@ -53,28 +92,51 @@ function mapSrc(raw?: string): string {
 const embedSrc = mapSrc(biz.mapEmbed);
 ---
 
-<!-- HERO — CTA centralizado -->
-<section class="border-b border-rule">
-  <div class="container-x pt-16 md:pt-24 pb-16 md:pb-24 text-center">
-    <p class="mono uppercase text-ink-faint mb-6">{company}{cities[0] ? ` · ${cities[0].name}` : ''}</p>
-    <h1 class="font-display text-ink max-w-3xl mx-auto">{heroTitle}</h1>
-    {heroSubtitle && <p class="text-lg md:text-xl text-ink-muted leading-relaxed max-w-2xl mx-auto mt-5">{heroSubtitle}</p>}
+<!-- HERO — drenado na cor do nicho (ou foto de fundo) + glifo de background -->
+<section
+  class="relative isolate overflow-hidden border-b border-rule"
+  style={`color: ${heroInk};${heroImg ? '' : ` background-color: ${heroColor};`}`}
+>
+  {heroImg && <img src={heroImg} alt="" aria-hidden="true" class="absolute inset-0 -z-30 w-full h-full object-cover" />}
+  {/* Escurecida padrão: preta sobre a foto pro texto sobressair; drench colorido quando não há foto. */}
+  <div aria-hidden="true" class="absolute inset-0 -z-10"
+    style={heroImg
+      ? 'background: linear-gradient(180deg, rgb(8 8 10 / 0.52) 0%, rgb(8 8 10 / 0.70) 100%);'
+      : 'background-color: rgb(20 20 24 / 0.16);'}></div>
+  {!heroImg && (
+    <span aria-hidden="true"
+      class="pointer-events-none select-none absolute -right-6 md:-right-10 -bottom-20 md:-bottom-28 -z-10 font-display font-bold leading-none opacity-[0.10] text-[16rem] md:text-[28rem]">
+      {heroInitial}
+    </span>
+  )}
+  <div class="container-x pt-20 md:pt-28 pb-16 md:pb-24 text-center relative">
+    <p class="mono uppercase mb-6 opacity-80">{company}{cities[0] ? ` · ${cities[0].name}` : ''}</p>
+    <h1 class="font-display max-w-3xl mx-auto" style="color: inherit;">{heroTitle}</h1>
+    {heroSubtitle && <p class="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mt-5 opacity-90">{heroSubtitle}</p>}
     {(waUrl || phoneHref) && (
       <div class="flex flex-wrap gap-3 mt-8 justify-center">
         {waUrl && (
           <a href={waUrl} target="_blank" rel="noopener noreferrer"
-            class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded bg-primary text-bg font-semibold no-underline hover:brightness-90 transition-[filter]">
+            class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded bg-surface text-ink font-semibold no-underline hover:opacity-90 transition-opacity">
             Pedir orçamento no WhatsApp
           </a>
         )}
         {phoneHref && (
           <a href={phoneHref}
-            class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors">
+            class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded border border-current font-semibold no-underline transition-opacity hover:opacity-80">
             Ligar: {biz.phone}
           </a>
         )}
       </div>
     )}
+    <ul class="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 mt-9 text-sm opacity-90">
+      {trust.map((t) => (
+        <li class="inline-flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+          {t}
+        </li>
+      ))}
+    </ul>
   </div>
 </section>
 
@@ -90,30 +152,54 @@ const embedSrc = mapSrc(biz.mapEmbed);
   </div>
 ) : (
   <>
-    <!-- SERVIÇOS — grid 3 colunas -->
-    <section id="servicos" class="border-b border-rule scroll-mt-24">
+    <!-- BENEFÍCIOS — provas curtas (vêm do modelo de página) -->
+    {benefits.length > 0 && (
+      <section class="border-b border-rule">
+        <div class="container-x py-10 md:py-12">
+          <ul class="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
+            {benefits.map((b) => (
+              <li class="flex items-start gap-3">
+                <span class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style={`background-color: ${rgba(accent, 0.14)}; color: ${accent}`}>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                <span class="text-ink font-medium leading-snug pt-1.5">{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
+
+    <!-- SERVIÇOS — cards centralizados (não ficam órfãos com poucos serviços) -->
+    <section id="servicos" class="bg-surface border-b border-rule scroll-mt-24">
       <div class="container-x py-12 md:py-16">
-        <div class="text-center mb-8">
+        <div class="text-center mb-8 md:mb-10">
           <p class="mono uppercase text-ink-faint mb-2">o que fazemos</p>
           <h2 class="font-display text-2xl md:text-3xl text-ink">Nossos serviços</h2>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {services.map((svc) => {
-            const cardColor = nicheOf(svc.niche)?.color || '#8b4a36';
-            const ink = pickInk(cardColor);
+            const cardColor = svc.color || nicheOf(svc.niche)?.color || accent;
+            const cink = pickInk(cardColor);
             return (
               <a href={serviceHref(svc)}
-                class="group rounded-md p-6 flex flex-col justify-between min-h-[11rem] no-underline transition-[filter] hover:brightness-[1.06]"
-                style={`background-color: ${cardColor}; color: ${ink.color}`}>
-                <div>
-                  {svc.icon && <span class="text-2xl block mb-3" aria-hidden="true">{svc.icon}</span>}
-                  <h3 class="font-display text-xl md:text-2xl leading-tight tracking-tight">{svc.title}</h3>
-                  {svc.shortDescription && <p class="text-sm opacity-90 mt-2 leading-relaxed">{svc.shortDescription}</p>}
+                class="group block rounded-lg overflow-hidden bg-surface border border-border shadow-sm no-underline hover:shadow-md transition-shadow">
+                <div class="relative aspect-[4/3] overflow-hidden bg-elev">
+                  {svc.image ? (
+                    <img src={svc.image} alt={svc.title} loading="lazy" width="1200" height="800"
+                      class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />
+                  ) : (
+                    <div class="w-full h-full flex items-center justify-center text-5xl" style={`background-color: ${cardColor}; color: ${cink.color}`} aria-hidden="true">{svc.icon || '🏗️'}</div>
+                  )}
                 </div>
-                <span class="mono uppercase text-sm mt-5 inline-flex items-center gap-2 self-start border-b border-current pb-1">
-                  ver detalhes
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="transition-transform group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </span>
+                <div class="p-5">
+                  <h3 class="font-display text-lg md:text-xl text-ink leading-tight tracking-tight">{svc.title}</h3>
+                  {svc.shortDescription && <p class="text-sm text-ink-muted mt-1.5 leading-relaxed line-clamp-2">{svc.shortDescription}</p>}
+                  <span class="mono uppercase text-xs mt-4 inline-flex items-center gap-2 font-semibold" style={`color: ${accent}`}>
+                    ver detalhes
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="transition-transform group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                  </span>
+                </div>
               </a>
             );
           })}
@@ -121,13 +207,70 @@ const embedSrc = mapSrc(biz.mapEmbed);
       </div>
     </section>
 
-    <!-- QUEM SOMOS -->
+    <!-- COMO FUNCIONA — 3 passos -->
+    <section class="relative isolate overflow-hidden bg-elev border-b border-rule">
+      <span aria-hidden="true" class="pointer-events-none absolute -left-20 -top-20 w-80 h-80 rounded-full border-[3.5rem]" style={`border-color: ${heroColor}; opacity: 0.07;`}></span>
+      <span aria-hidden="true" class="pointer-events-none absolute right-[-6rem] bottom-[-4rem] w-64 h-64 rounded-full" style={`background-color: ${heroColor}; opacity: 0.05;`}></span>
+      <div class="container-x py-12 md:py-16 relative">
+        <div class="text-center mb-8 md:mb-10">
+          <p class="mono uppercase text-ink-faint mb-2">simples assim</p>
+          <h2 class="font-display text-2xl md:text-3xl text-ink">Como funciona</h2>
+        </div>
+        <ol class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+          {steps.map((s) => (
+            <li>
+              <span class="font-display text-5xl leading-none" style={`color: ${rgba(accent, 0.32)}`} aria-hidden="true">{s.n}</span>
+              <h3 class="text-lg font-semibold text-ink mt-3 mb-1.5">{s.t}</h3>
+              <p class="text-ink-muted leading-relaxed">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <!-- QUEM SOMOS — prosa + card de atendimento -->
     {(biz.aboutTitle || aboutParas.length > 0) && (
-      <section id="quem-somos" class="border-b border-rule scroll-mt-24">
-        <div class="container-x py-12 md:py-16 max-w-prose-lg">
-          <p class="mono uppercase text-ink-faint mb-2">a empresa</p>
-          <h2 class="font-display text-2xl md:text-3xl text-ink mb-5">{biz.aboutTitle || 'Quem somos'}</h2>
-          {aboutParas.map((p) => <p class="text-ink-muted leading-relaxed mb-4">{p}</p>)}
+      <section id="quem-somos" class="bg-surface border-b border-rule scroll-mt-24">
+        <div class="container-x py-12 md:py-16">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+            <div class="lg:col-span-2 max-w-prose-lg">
+              <p class="mono uppercase text-ink-faint mb-2">a empresa</p>
+              <h2 class="font-display text-2xl md:text-3xl text-ink mb-5">{biz.aboutTitle || 'Quem somos'}</h2>
+              {aboutParas.map((p) => <p class="text-ink-muted leading-relaxed mb-4">{p}</p>)}
+            </div>
+            <aside class="lg:col-span-1">
+              <div class="bg-bg border border-border rounded-md p-6 lg:sticky lg:top-6">
+                <p class="mono uppercase text-xs text-ink-faint mb-4">Atendimento</p>
+                <dl class="space-y-3 text-sm">
+                  {region && (
+                    <div>
+                      <dt class="text-ink-faint">Onde</dt>
+                      <dd class="text-ink font-medium">{region} e região</dd>
+                    </div>
+                  )}
+                  {biz.hours && (
+                    <div>
+                      <dt class="text-ink-faint">Horário</dt>
+                      <dd class="text-ink font-medium">{biz.hours}</dd>
+                    </div>
+                  )}
+                  {biz.phone && (
+                    <div>
+                      <dt class="text-ink-faint">Telefone</dt>
+                      <dd><a href={phoneHref} class="text-ink font-medium hover:text-primary no-underline transition-colors">{biz.phone}</a></dd>
+                    </div>
+                  )}
+                </dl>
+                {waUrl && (
+                  <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                    class="mt-5 w-full inline-flex items-center justify-center min-h-[44px] px-4 py-3 rounded font-semibold no-underline hover:brightness-90 transition-[filter]"
+                    style={`background-color: ${accent}; color: ${accentInk}`}>
+                    Falar no WhatsApp
+                  </a>
+                )}
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
     )}
@@ -153,7 +296,7 @@ const embedSrc = mapSrc(biz.mapEmbed);
     )}
 
     <!-- CONTATO + MAPA -->
-    <section id="contato" class="border-b border-rule scroll-mt-24">
+    <section id="contato" class="bg-surface border-b border-rule scroll-mt-24">
       <div class="container-x py-12 md:py-16">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           <div>
@@ -183,7 +326,8 @@ const embedSrc = mapSrc(biz.mapEmbed);
               <div class="flex flex-wrap gap-3 mt-7">
                 {waUrl && (
                   <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                    class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded bg-primary text-bg font-semibold no-underline hover:brightness-90 transition-[filter]">
+                    class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded font-semibold no-underline hover:brightness-90 transition-[filter]"
+                    style={`background-color: ${accent}; color: ${accentInk}`}>
                     Falar no WhatsApp
                   </a>
                 )}
@@ -219,5 +363,31 @@ const embedSrc = mapSrc(biz.mapEmbed);
         </div>
       </div>
     </section>
+
+    <!-- CTA FINAL -->
+    {(waUrl || phoneHref) && (
+      <section style={`background-color: ${accent}; color: ${accentInk};`}>
+        <div class="container-x py-14 md:py-20 text-center">
+          <h2 class="font-display text-2xl md:text-3xl max-w-2xl mx-auto leading-snug" style="color: inherit;">
+            {services[0] ? `Precisa de ${services[0].title.toLowerCase()}?` : 'Precisa de um orçamento?'}
+          </h2>
+          <p class="opacity-80 mt-3 max-w-xl mx-auto">Fale agora e receba um orçamento sem compromisso.</p>
+          <div class="flex flex-wrap gap-3 mt-8 justify-center">
+            {waUrl && (
+              <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded bg-surface text-ink font-semibold no-underline hover:opacity-90 transition-opacity">
+                Pedir no WhatsApp
+              </a>
+            )}
+            {phoneHref && (
+              <a href={phoneHref}
+                class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded border border-current font-semibold no-underline transition-opacity hover:opacity-80">
+                Ligar: {biz.phone}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
   </>
 )}

@@ -2,8 +2,9 @@
   {
     "title": "Aluguel de Andaime",
     "slug": "aluguel-de-andaime",
-    "shortDescription": "Andaimes metálicos para obras e fachadas",
-    "icon": "🪜",
+    "shortDescription": "Andaimes metálicos para obras e fachadas, com entrega e montagem.",
+    "icon": "🏗️",
+    "image": "/images/local/aluguel-de-andaime.jpg",
     "niche": "aluguel-andaime",
     "outline": [
       { "level": "h2", "text": "Por que escolher" },
@@ -11,6 +12,78 @@
     ],
     "generatedContent": "## {servico} em {cidade}\n\nProcurando **{servico} em {cidade}, {estado}**? A {empresa} atende toda a região de {cidade} com andaimes metálicos certificados, montagem rápida e preço justo.\n\n## Por que escolher a {empresa}\n\n- Entrega e retirada em {cidade}\n- Orçamento sem compromisso\n- Equipamentos revisados e dentro da norma\n- Atendimento por telefone e WhatsApp\n\n## Como funciona a locação\n\nVocê informa a metragem e o prazo, a gente leva o andaime até a obra em {cidade} e cuida da montagem. No fim do período, retiramos tudo.\n\nFale com a {empresa} pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} faz entrega e montagem em {cidade} e em toda a região.\n\n### Qual o prazo mínimo de locação?\n\nO prazo é flexível. Fale com a {empresa} pelo telefone {telefone} para combinar.",
     "contentGeneratedAt": "2026-05-28",
+    "active": true
+  },
+  {
+    "title": "Andaime Fachadeiro",
+    "slug": "andaime-fachadeiro",
+    "shortDescription": "Andaime fachadeiro para pintura e revestimento de fachadas.",
+    "icon": "🧱",
+    "image": "/images/local/andaime-fachadeiro.jpg",
+    "niche": "aluguel-andaime",
+    "active": true
+  },
+  {
+    "title": "Andaime Tubular",
+    "slug": "andaime-tubular",
+    "shortDescription": "Andaime tubular resistente para obras de qualquer porte.",
+    "icon": "🪛",
+    "image": "/images/local/andaime-tubular.jpg",
+    "niche": "aluguel-andaime",
+    "active": true
+  },
+  {
+    "title": "Andaime Suspenso",
+    "slug": "andaime-suspenso",
+    "shortDescription": "Andaime suspenso para trabalhos em altura e fachadas altas.",
+    "icon": "🏢",
+    "image": "/images/local/andaime-suspenso.jpg",
+    "niche": "aluguel-andaime",
+    "active": true
+  },
+  {
+    "title": "Plataforma Elevatória",
+    "slug": "plataforma-elevatoria",
+    "shortDescription": "Locação de plataforma elevatória para acesso seguro em altura.",
+    "icon": "⬆️",
+    "image": "/images/local/plataforma-elevatoria.jpg",
+    "niche": "aluguel-andaime",
+    "active": true
+  },
+  {
+    "title": "Escada de Alumínio",
+    "slug": "escada-de-aluminio",
+    "shortDescription": "Escadas de alumínio extensíveis para manutenção e obras.",
+    "icon": "🪜",
+    "image": "/images/local/escada-de-aluminio.jpg",
+    "niche": "aluguel-andaime",
+    "active": true
+  },
+  {
+    "title": "Betoneira",
+    "slug": "betoneira",
+    "shortDescription": "Aluguel de betoneira para preparo de concreto na obra.",
+    "icon": "🛠️",
+    "image": "/images/local/betoneira.jpg",
+    "niche": "aluguel-andaime",
+    "active": true
+  },
+  {
+    "title": "Torre de Andaime",
+    "slug": "torre-de-andaime",
+    "shortDescription": "Torre de andaime móvel para alcançar grandes alturas com estabilidade.",
+    "icon": "🗼",
+    "image": "/images/local/torre-de-andaime.jpg",
+    "niche": "aluguel-andaime",
+    "active": true
+  },
+  {
+    "title": "Escoramento",
+    "slug": "escoramento",
+    "shortDescription": "Escoras e escoramento metálico para lajes e estruturas.",
+    "icon": "🏗️",
+    "image": "/images/local/escoramento.jpg",
+    "niche": "aluguel-andaime",
     "active": true
   }
 ]

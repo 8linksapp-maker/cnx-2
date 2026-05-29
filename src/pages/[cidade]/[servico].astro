@@ -3,13 +3,9 @@
  * [cidade]/[servico].astro — Página de SEO local (Tema Local).
  *
  * SSG puro: getStaticPaths gera UMA página por combo serviço×localidade ativo.
- * O conteúdo do serviço é parametrizado ({cidade}/{servico}/...) e resolvido aqui
- * em build-time via applyTemplateVars. Cor do nicho injetada inline (--niche).
- *
- * 404 natural: combos inativos nem entram em getStaticPaths.
- *
- * NOTA (Fatia 0): estrutura funcional + a11y básica. A fidelidade visual
- * (tokens Café-da-Tarde, microinteração, hierarquia) é do Leonardo no polish.
+ * Conteúdo parametrizado ({cidade}/{servico}/...) resolvido em build-time.
+ * Mesma linguagem visual da home: hero com foto + escurecida preta, accent na
+ * cor do serviço, cards com imagem, interlink de SEO (outros serviços / outras cidades).
  */
 import { marked } from 'marked';
 import BaseLayout from '../../layouts/BaseLayout.astro';
@@ -24,14 +20,12 @@ export async function getStaticPaths() {
   const locations = readData<Location[]>('locations.json', []).filter(
     (l) => l.active || l.type === 'cidade',
   );
-
   const paths: any[] = [];
   for (const loc of locations) {
     for (const svc of services) {
       paths.push({ params: { cidade: loc.slug, servico: svc.slug }, props: { loc, svc } });
     }
   }
-  // Visibilidade do teto de build-time (ver gotcha #1 do handoff do Leonardo).
   console.log(`[tema-local] ${paths.length} páginas geradas (${services.length} serviços × ${locations.length} localidades)`);
   return paths;
 }
@@ -41,20 +35,23 @@ const { loc, svc } = Astro.props as { loc: Location; svc: Service };
 const niches = readData<Niche[]>('nichos.json', []);
 const tpl = readData<LocalTemplate>('localTemplate.json', {});
 const biz = readData<LocalBusiness>('localBusiness.json', {} as LocalBusiness);
+const allServices = readData<Service[]>('services.json', []).filter((s) => s.active !== false);
+const allLocations = readData<Location[]>('locations.json', []).filter((l) => l.active !== false || l.type === 'cidade');
 
-const niche = niches.find((n) => n.slug === svc.niche);
-const nicheColor = niche?.color || '#8b4a36';
+const nicheOf = (slug?: string) => niches.find((n) => n.slug === slug);
+const accent = svc.color || nicheOf(svc.niche)?.color || '#8b4a36';
+const accentInk = pickInk(accent).color;
+const rgba = (hex: string, a: number) => {
+  const h = hex.replace('#', '');
+  return `rgba(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}, ${a})`;
+};
 
 const vars = buildTemplateVars(loc, svc, biz);
 
 // Conteúdo: usa o gerado pelo serviço; senão cai no template fallback.
-const rawContent = svc.generatedContent?.trim() || tpl.pageContent || '';
-const content = applyTemplateVars(rawContent, vars);
-
-// FAQ extraída pro acordeão + JSON-LD; removida do corpo pra não duplicar.
+const content = applyTemplateVars(svc.generatedContent?.trim() || tpl.pageContent || '', vars);
 const faqItems = extractFaq(content);
 const contentNoFaq = removeFaqFromContent(content);
-
 marked.setOptions({ gfm: true, breaks: true });
 const contentHtml = contentNoFaq ? String(marked.parse(contentNoFaq)) : '';
 
@@ -63,57 +60,61 @@ const heroSubtitle = applyTemplateVars(tpl.heroSubtitle || '', vars);
 const metaTitle = applyTemplateVars(tpl.metaTitle || '{servico} em {cidade}', vars);
 const metaDescription = applyTemplateVars(tpl.metaDescription || heroSubtitle, vars);
 
-// Texto sobre a cor do nicho — razão de contraste WCAG real (ver lib/contrastInk).
-const heroInk = pickInk(nicheColor);
-const onColor = heroInk.color;
-const onColorBorder = heroInk.mode === 'dark' ? 'rgb(20 20 24 / 0.45)' : 'rgb(248 248 246 / 0.55)';
+const benefits = (tpl.benefits || []).map((b) => applyTemplateVars(b, vars)).filter(Boolean);
+
+// Hero: foto do serviço com escurecida preta; sem foto, drenado na cor do serviço.
+const heroImg = svc.image || '';
+const heroText = heroImg ? 'rgb(248 248 246)' : accentInk;
+
+const trust = [
+  'Orçamento sem compromisso',
+  `Atendimento em ${loc.name}`,
+  'Resposta rápida no WhatsApp',
+];
+
+// Interlink de SEO.
+const otherServices = allServices.filter((s) => s.slug !== svc.slug).slice(0, 6);
+const otherCities = allLocations.filter((l) => l.slug !== loc.slug).slice(0, 12);
 
 // CTAs de contato.
 const waNumber = (biz.whatsapp || '').replace(/\D/g, '');
-const waText = encodeURIComponent(
-  `${biz.whatsappMessage || 'Olá! Vim pelo site e gostaria de um orçamento.'} (${svc.title} em ${loc.name})`,
-);
+const waText = encodeURIComponent(`${biz.whatsappMessage || 'Olá! Vim pelo site e gostaria de um orçamento.'} (${svc.title} em ${loc.name})`);
 const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waText}` : '';
 const phoneHref = biz.phone ? `tel:${biz.phone.replace(/[^\d+]/g, '')}` : '';
 
-const heroStyle = `--niche: ${nicheColor};`;
-
-// JSON-LD — só URLs que existem de verdade (não há índice por cidade).
+// JSON-LD.
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString().replace(/\/$/, '');
 const pageUrl = `${origin}/${loc.slug}/${svc.slug}`;
 const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Início', item: `${origin}/` },
     { '@type': 'ListItem', position: 2, name: `${svc.title} em ${loc.name}`, item: pageUrl },
   ],
 };
 const faqSchema = faqItems.length > 0 ? {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faqItems.map((f) => ({
-    '@type': 'Question',
-    name: f.q,
-    acceptedAnswer: { '@type': 'Answer', text: f.a },
-  })),
+  '@context': 'https://schema.org', '@type': 'FAQPage',
+  mainEntity: faqItems.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
 } : null;
 ---
 
 <BaseLayout title={metaTitle} description={metaDescription} type="article">
   <article>
-    <!-- HERO — cor do nicho via --niche -->
-    <header
-      class="relative isolate overflow-hidden"
-      style={`${heroStyle} background-color: var(--niche); color: ${onColor};`}
-    >
-      <div class="container-x pt-14 md:pt-20 pb-16 md:pb-20">
+    <!-- HERO — foto do serviço + escurecida preta -->
+    <header class="relative isolate overflow-hidden" style={`color: ${heroText}; ${heroImg ? '' : `background-color: ${accent};`}`}>
+      {heroImg && <img src={heroImg} alt="" aria-hidden="true" class="absolute inset-0 -z-30 w-full h-full object-cover" />}
+      <div aria-hidden="true" class="absolute inset-0 -z-10"
+        style={heroImg
+          ? 'background: linear-gradient(180deg, rgb(8 8 10 / 0.55) 0%, rgb(8 8 10 / 0.72) 100%);'
+          : 'background-color: rgb(20 20 24 / 0.16);'}></div>
+
+      <div class="container-x pt-14 md:pt-20 pb-14 md:pb-20 relative">
         <nav class="mono text-sm opacity-80 mb-8 flex flex-wrap items-center gap-2" aria-label="Você está em">
-          <a href="/" class="hover:opacity-100 transition-opacity">início</a>
+          <a href="/" class="hover:opacity-100 transition-opacity" style="color: inherit;">início</a>
           <span aria-hidden="true" class="opacity-60">/</span>
           <span>{loc.name}</span>
           <span aria-hidden="true" class="opacity-60">/</span>
-          <span class="opacity-100">{svc.title}</span>
+          <span>{svc.title}</span>
         </nav>
 
         <p class="mono uppercase text-sm tracking-wide opacity-80 mb-3">
@@ -121,39 +122,55 @@ const faqSchema = faqItems.length > 0 ? {
           {loc.name}{loc.city && loc.city !== loc.name ? ` · ${loc.city}` : ''}, {loc.state}
         </p>
 
-        <h1 class="font-display max-w-3xl mb-5">
-          {heroTitle}
-        </h1>
+        <h1 class="font-display max-w-3xl mb-5" style="color: inherit;">{heroTitle}</h1>
 
-        {heroSubtitle && (
-          <p class="text-lg md:text-xl leading-snug max-w-2xl opacity-90 mb-8">{heroSubtitle}</p>
-        )}
+        {heroSubtitle && <p class="text-lg md:text-xl leading-snug max-w-2xl opacity-90 mb-8">{heroSubtitle}</p>}
 
         <div class="flex flex-wrap gap-3">
           {waUrl && (
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded bg-surface text-ink font-semibold no-underline hover:opacity-90 transition-opacity"
-            >
+            <a href={waUrl} target="_blank" rel="noopener noreferrer"
+              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded bg-surface text-ink font-semibold no-underline hover:opacity-90 transition-opacity">
               Pedir orçamento no WhatsApp
             </a>
           )}
           {phoneHref && (
-            <a
-              href={phoneHref}
-              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded border font-semibold no-underline transition-opacity hover:opacity-80"
-              style={`border-color: ${onColorBorder}`}
-            >
+            <a href={phoneHref}
+              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded border border-current font-semibold no-underline transition-opacity hover:opacity-80">
               Ligar: {biz.phone}
             </a>
           )}
         </div>
+
+        <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-8 text-sm opacity-90">
+          {trust.map((t) => (
+            <li class="inline-flex items-center gap-2">
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+              {t}
+            </li>
+          ))}
+        </ul>
       </div>
     </header>
 
-    <!-- CONTEÚDO -->
+    <!-- BENEFÍCIOS -->
+    {benefits.length > 0 && (
+      <section class="bg-surface border-b border-rule">
+        <div class="container-x py-8 md:py-10">
+          <ul class="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-8">
+            {benefits.map((b) => (
+              <li class="flex items-start gap-3">
+                <span class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={`background-color: ${rgba(accent, 0.14)}; color: ${accent}`}>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                <span class="text-ink font-medium leading-snug pt-1">{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
+
+    <!-- CONTEÚDO + CARD DE ORÇAMENTO -->
     <div class="container-x py-12 md:py-16">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div class="lg:col-span-8">
@@ -164,34 +181,30 @@ const faqSchema = faqItems.length > 0 ? {
           )}
         </div>
 
-        <!-- Sidebar de contato -->
         <aside class="lg:col-span-4">
-          <div class="bg-surface border border-border rounded-md p-6 lg:sticky lg:top-6">
-            <p class="mono uppercase text-sm text-ink-faint mb-1">Orçamento gratuito</p>
+          <div class="bg-surface border border-border rounded-lg p-6 lg:sticky lg:top-6">
+            <p class="mono uppercase text-xs text-ink-faint mb-1">Orçamento gratuito</p>
             <h2 class="font-display text-xl leading-snug mb-4">{svc.title} em {loc.name}</h2>
             <div class="flex flex-col gap-2">
               {waUrl && (
-                <a
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center justify-center min-h-[44px] px-4 py-3 rounded bg-primary text-bg font-semibold no-underline hover:brightness-90 transition-[filter]"
-                >
+                <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center min-h-[44px] px-4 py-3 rounded font-semibold no-underline hover:brightness-90 transition-[filter]"
+                  style={`background-color: ${accent}; color: ${accentInk}`}>
                   Falar no WhatsApp
                 </a>
               )}
               {phoneHref && (
-                <a
-                  href={phoneHref}
-                  class="inline-flex items-center justify-center min-h-[44px] px-4 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors"
-                >
+                <a href={phoneHref}
+                  class="inline-flex items-center justify-center min-h-[44px] px-4 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors">
                   Ligar: {biz.phone}
                 </a>
               )}
             </div>
-            {biz.companyName && (
-              <p class="mt-4 text-sm text-ink-faint">{biz.companyName}</p>
-            )}
+            <dl class="mt-5 space-y-3 text-sm border-t border-border pt-5">
+              {biz.hours && (<div><dt class="text-ink-faint">Horário</dt><dd class="text-ink">{biz.hours}</dd></div>)}
+              {biz.address && (<div><dt class="text-ink-faint">Endereço</dt><dd class="text-ink">{biz.address}</dd></div>)}
+              {biz.companyName && (<div><dt class="text-ink-faint">Empresa</dt><dd class="text-ink font-medium">{biz.companyName}</dd></div>)}
+            </dl>
           </div>
         </aside>
       </div>
@@ -200,12 +213,12 @@ const faqSchema = faqItems.length > 0 ? {
         <section class="mt-12 md:mt-16 border-t border-rule pt-10 lg:max-w-[68ch]">
           <h2 class="font-display text-2xl mb-1">Perguntas frequentes</h2>
           <p class="text-ink-faint text-sm mb-6">Dúvidas sobre {svc.title} em {loc.name}</p>
-          <div class="divide-y divide-border border border-border rounded-md">
+          <div class="divide-y divide-border border border-border rounded-lg overflow-hidden">
             {faqItems.map((f) => (
               <details class="group">
-                <summary class="flex items-center justify-between gap-4 px-4 py-4 cursor-pointer font-semibold text-ink list-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex items-center justify-between gap-4 px-4 py-4 cursor-pointer font-semibold text-ink list-none [&::-webkit-details-marker]:hidden hover:bg-elev transition-colors">
                   <span>{f.q}</span>
-                  <svg class="w-4 h-4 text-ink-faint shrink-0 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
+                  <svg class="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" style={`color: ${accent}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
                 </summary>
                 <p class="px-4 pb-4 text-ink-muted leading-relaxed">{f.a}</p>
               </details>
@@ -214,6 +227,86 @@ const faqSchema = faqItems.length > 0 ? {
         </section>
       )}
     </div>
+
+    <!-- OUTROS SERVIÇOS (interlink, mesma cidade) -->
+    {otherServices.length > 0 && (
+      <section class="bg-surface border-y border-rule">
+        <div class="container-x py-12 md:py-16">
+          <div class="mb-8">
+            <p class="mono uppercase text-ink-faint mb-2">também oferecemos</p>
+            <h2 class="font-display text-2xl md:text-3xl text-ink">Outros serviços em {loc.name}</h2>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {otherServices.map((o) => {
+              const oColor = o.color || nicheOf(o.niche)?.color || accent;
+              const oInk = pickInk(oColor);
+              return (
+                <a href={`/${loc.slug}/${o.slug}`} class="group block rounded-lg overflow-hidden bg-surface border border-border shadow-sm no-underline hover:shadow-md transition-shadow">
+                  <div class="relative aspect-[4/3] overflow-hidden bg-elev">
+                    {o.image
+                      ? <img src={o.image} alt={o.title} loading="lazy" width="1200" height="800" class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />
+                      : <div class="w-full h-full flex items-center justify-center text-5xl" style={`background-color: ${oColor}; color: ${oInk.color}`} aria-hidden="true">{o.icon || '🏗️'}</div>}
+                  </div>
+                  <div class="p-5">
+                    <h3 class="font-display text-lg md:text-xl text-ink leading-tight tracking-tight">{o.title} <span class="text-ink-faint font-body text-sm">em {loc.name}</span></h3>
+                    {o.shortDescription && <p class="text-sm text-ink-muted mt-1.5 leading-relaxed line-clamp-2">{o.shortDescription}</p>}
+                    <span class="mono uppercase text-xs mt-4 inline-flex items-center gap-2 font-semibold" style={`color: ${accent}`}>
+                      ver detalhes
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="transition-transform group-hover:translate-x-1"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- TAMBÉM ATENDEMOS (interlink, este serviço em outras cidades) -->
+    {otherCities.length > 0 && (
+      <section class="border-b border-rule">
+        <div class="container-x py-12 md:py-16">
+          <p class="mono uppercase text-ink-faint mb-2">cobertura</p>
+          <h2 class="font-display text-2xl md:text-3xl text-ink mb-6">{svc.title} em outras cidades</h2>
+          <ul class="flex flex-wrap gap-2">
+            {otherCities.map((l) => (
+              <li>
+                <a href={`/${l.slug}/${svc.slug}`} class="inline-flex items-center min-h-[44px] px-3.5 rounded border border-border text-sm text-ink-muted hover:border-ink hover:text-ink no-underline transition-colors">
+                  {l.name} <span class="mono text-xs text-ink-faint ml-1">· {l.state}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
+
+    <!-- CTA FINAL -->
+    {(waUrl || phoneHref) && (
+      <section style={`background-color: ${accent}; color: ${accentInk};`}>
+        <div class="container-x py-14 md:py-20 text-center">
+          <h2 class="font-display text-2xl md:text-3xl max-w-2xl mx-auto leading-snug" style="color: inherit;">
+            Precisa de {svc.title.toLowerCase()} em {loc.name}?
+          </h2>
+          <p class="opacity-80 mt-3 max-w-xl mx-auto">Fale agora e receba um orçamento sem compromisso.</p>
+          <div class="flex flex-wrap gap-3 mt-8 justify-center">
+            {waUrl && (
+              <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded bg-surface text-ink font-semibold no-underline hover:opacity-90 transition-opacity">
+                Pedir no WhatsApp
+              </a>
+            )}
+            {phoneHref && (
+              <a href={phoneHref}
+                class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded border border-current font-semibold no-underline transition-opacity hover:opacity-80">
+                Ligar: {biz.phone}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
 
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
     {faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
