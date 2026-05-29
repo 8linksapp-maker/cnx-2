@@ -96,8 +96,8 @@ export default function LocationsManager() {
         const slug = (tempSlug.trim() || slugify(name)).replace(/^-|-$/g, '');
         const state = tempState.trim();
         if (!name) { setModalError('Digite o nome da localidade.'); return; }
-        if (!slug) { setModalError('A URL (slug) é obrigatória.'); return; }
-        if (!/^[A-Za-z]{2}$/.test(state)) { setModalError('Informe a UF com 2 letras (ex: SP).'); return; }
+        if (!slug) { setModalError('Defina o endereço (URL) da localidade.'); return; }
+        if (!/^[A-Za-z]{2}$/.test(state)) { setModalError('Informe o estado com 2 letras (ex: SP).'); return; }
 
         const collision = locations.find((l, i) => i !== editingIndex && l.slug === slug);
         if (collision) { setModalError(`A URL "${slug}" já existe ("${collision.name}"). Escolha outra.`); return; }
@@ -232,7 +232,7 @@ export default function LocationsManager() {
                                     <input id="loc-name" type="text" value={tempName} onChange={e => handleNameChange(e.target.value)} className="w-full bg-elev border border-border rounded-md px-4 py-3 text-ink font-semibold focus:ring-2 focus:ring-primary/30 outline-none" placeholder="Ex: Moema" autoFocus />
                                 </div>
                                 <div>
-                                    <label htmlFor="loc-state" className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">UF</label>
+                                    <label htmlFor="loc-state" className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">Estado</label>
                                     <input id="loc-state" type="text" maxLength={2} value={tempState} onChange={e => setTempState(e.target.value.toUpperCase())} className="w-16 text-center bg-elev border border-border rounded-md px-2 py-3 text-ink font-mono uppercase focus:ring-2 focus:ring-primary/30 outline-none" placeholder="SP" />
                                 </div>
                             </div>
@@ -250,7 +250,7 @@ export default function LocationsManager() {
                             </div>
                             {tempType !== 'cidade' && (
                                 <div>
-                                    <label htmlFor="loc-city" className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">Cidade-mãe <span className="text-ink-faint normal-case tracking-normal">(opcional)</span></label>
+                                    <label htmlFor="loc-city" className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">Cidade onde fica <span className="text-ink-faint normal-case tracking-normal">(opcional)</span></label>
                                     <input id="loc-city" type="text" value={tempCity} onChange={e => setTempCity(e.target.value)} className="w-full bg-elev border border-border rounded-md px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none" placeholder="São Paulo" />
                                 </div>
                             )}
@@ -289,7 +289,7 @@ export default function LocationsManager() {
                                 </div>
                                 {importType !== 'cidade' && (
                                     <div>
-                                        <label htmlFor="imp-city" className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">Cidade-mãe</label>
+                                        <label htmlFor="imp-city" className="block text-[10px] font-bold text-ink-muted uppercase tracking-widest mb-2">Cidade onde ficam</label>
                                         <input id="imp-city" type="text" value={importCity} onChange={e => setImportCity(e.target.value)} className="w-full bg-elev border border-border rounded-md px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none" placeholder="São Paulo" />
                                     </div>
                                 )}

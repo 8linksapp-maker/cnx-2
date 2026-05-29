@@ -101,7 +101,7 @@ export default function ServicesManager() {
             if (!res.ok) throw new Error(data?.error || 'Falha ao gerar');
             setTempContent(data.content || '');
             setTempGenAt(new Date().toISOString().split('T')[0]);
-            triggerToast(data.usedAI ? 'Conteúdo gerado pela IA!' : 'Sem API key — gerado modelo de exemplo. Configure a IA para texto real.', data.usedAI ? 'success' : 'progress', 100);
+            triggerToast(data.usedAI ? 'Conteúdo gerado pela IA!' : 'A IA está desligada. Criamos um texto de exemplo. Pra texto de verdade, ligue a IA nas configurações.', data.usedAI ? 'success' : 'progress', 100);
         } catch (err: any) {
             setModalError(err.message || 'Não foi possível gerar o conteúdo.');
             triggerToast('Não foi possível gerar o conteúdo.', 'error');
@@ -134,7 +134,7 @@ export default function ServicesManager() {
         const title = tempTitle.trim();
         const slug = (tempSlug.trim() || slugify(title)).replace(/^-|-$/g, '');
         if (!title) { setModalError('Digite o nome do serviço.'); return; }
-        if (!slug) { setModalError('A URL (slug) é obrigatória.'); return; }
+        if (!slug) { setModalError('Defina o endereço (URL) do serviço.'); return; }
         if (!tempNiche) { setModalError('Escolha um nicho para o serviço.'); return; }
 
         const collision = services.find((s, i) => i !== editingIndex && (s.title === title || s.slug === slug));
@@ -282,7 +282,7 @@ export default function ServicesManager() {
                             {/* Outline */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold text-ink-muted uppercase tracking-widest">Estrutura do conteúdo</span>
+                                    <span className="text-[10px] font-bold text-ink-muted uppercase tracking-widest">Seções do texto <span className="text-ink-faint normal-case tracking-normal">(opcional)</span></span>
                                     <button type="button" onClick={addOutline} className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"><Plus className="w-3 h-3" aria-hidden="true" /> Adicionar seção</button>
                                 </div>
                                 {tempOutline.length === 0 ? (
@@ -312,7 +312,7 @@ export default function ServicesManager() {
                                     <span className="text-[10px] font-bold text-ink-muted uppercase tracking-widest">Conteúdo {tempGenAt && <span className="text-ink-faint normal-case tracking-normal">· gerado {tempGenAt}</span>}</span>
                                     <div className="flex items-center gap-3">
                                         <label className="flex items-center gap-1.5 text-xs text-ink-muted cursor-pointer">
-                                            <input type="checkbox" checked={includeFaq} onChange={e => setIncludeFaq(e.target.checked)} className="w-3.5 h-3.5 accent-primary" /> com FAQ
+                                            <input type="checkbox" checked={includeFaq} onChange={e => setIncludeFaq(e.target.checked)} className="w-3.5 h-3.5 accent-primary" /> perguntas frequentes
                                         </label>
                                         <button type="button" onClick={generateWithAI} disabled={generating}
                                             className="text-xs font-semibold bg-primary-soft text-primary px-3 py-2 min-h-[36px] rounded flex items-center gap-1.5 hover:brightness-95 disabled:opacity-50 transition-all">

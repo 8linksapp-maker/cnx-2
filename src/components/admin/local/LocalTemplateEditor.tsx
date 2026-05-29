@@ -6,7 +6,7 @@ import type { LocalTemplate, LocalBusiness } from '../../../lib/localTypes';
 
 const VARS: { token: string; desc: string }[] = [
     { token: '{cidade}', desc: 'cidade ou bairro da página' },
-    { token: '{estado}', desc: 'UF (ex: SP)' },
+    { token: '{estado}', desc: 'estado (ex: SP)' },
     { token: '{servico}', desc: 'nome do serviço' },
     { token: '{empresa}', desc: 'nome da sua empresa' },
     { token: '{telefone}', desc: 'telefone de contato' },

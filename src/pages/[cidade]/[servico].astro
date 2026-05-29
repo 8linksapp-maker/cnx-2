@@ -16,6 +16,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { readData } from '../../lib/readData';
 import { applyTemplateVars, buildTemplateVars } from '../../lib/localVars';
 import { extractFaq, removeFaqFromContent } from '../../lib/localFaq';
+import { pickInk } from '../../lib/contrastInk';
 import type { Niche, Service, Location, LocalTemplate, LocalBusiness } from '../../lib/localTypes';
 
 export async function getStaticPaths() {
@@ -62,16 +63,10 @@ const heroSubtitle = applyTemplateVars(tpl.heroSubtitle || '', vars);
 const metaTitle = applyTemplateVars(tpl.metaTitle || '{servico} em {cidade}', vars);
 const metaDescription = applyTemplateVars(tpl.metaDescription || heroSubtitle, vars);
 
-// Escolhe texto claro ou escuro sobre a cor do nicho (a11y — contraste WCAG).
-function textOnColor(hex: string): 'light' | 'dark' {
-  const h = hex.replace('#', '');
-  if (h.length !== 6) return 'light';
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
-  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  return L > 0.4 ? 'dark' : 'light';
-}
-const heroInk = textOnColor(nicheColor);
+// Texto sobre a cor do nicho — razão de contraste WCAG real (ver lib/contrastInk).
+const heroInk = pickInk(nicheColor);
+const onColor = heroInk.color;
+const onColorBorder = heroInk.mode === 'dark' ? 'rgb(20 20 24 / 0.45)' : 'rgb(248 248 246 / 0.55)';
 
 // CTAs de contato.
 const waNumber = (biz.whatsapp || '').replace(/\D/g, '');
@@ -109,8 +104,8 @@ const faqSchema = faqItems.length > 0 ? {
   <article>
     <!-- HERO — cor do nicho via --niche -->
     <header
-      class:list={['relative isolate overflow-hidden', heroInk === 'dark' ? 'text-ink' : 'text-white']}
-      style={`${heroStyle} background-color: var(--niche);`}
+      class="relative isolate overflow-hidden"
+      style={`${heroStyle} background-color: var(--niche); color: ${onColor};`}
     >
       <div class="container-x pt-14 md:pt-20 pb-16 md:pb-20">
         <nav class="mono text-sm opacity-80 mb-8 flex flex-wrap items-center gap-2" aria-label="Você está em">
@@ -123,10 +118,10 @@ const faqSchema = faqItems.length > 0 ? {
 
         <p class="mono uppercase text-sm tracking-wide opacity-80 mb-3">
           {svc.icon && <span class="mr-1">{svc.icon}</span>}
-          {loc.name}{loc.city && loc.city !== loc.name ? ` · ${loc.city}` : ''} — {loc.state}
+          {loc.name}{loc.city && loc.city !== loc.name ? ` · ${loc.city}` : ''}, {loc.state}
         </p>
 
-        <h1 class="font-display text-3xl md:text-4xl lg:text-5xl leading-tight tracking-tight max-w-3xl mb-5">
+        <h1 class="font-display max-w-3xl mb-5">
           {heroTitle}
         </h1>
 
@@ -140,7 +135,7 @@ const faqSchema = faqItems.length > 0 ? {
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded bg-white text-ink font-semibold no-underline hover:opacity-90 transition-opacity"
+              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded bg-surface text-ink font-semibold no-underline hover:opacity-90 transition-opacity"
             >
               Pedir orçamento no WhatsApp
             </a>
@@ -148,10 +143,8 @@ const faqSchema = faqItems.length > 0 ? {
           {phoneHref && (
             <a
               href={phoneHref}
-              class:list={[
-                'inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded border font-semibold no-underline transition-colors',
-                heroInk === 'dark' ? 'border-ink/40 hover:border-ink' : 'border-white/50 hover:border-white',
-              ]}
+              class="inline-flex items-center justify-center min-h-[44px] px-5 py-3 rounded border font-semibold no-underline transition-opacity hover:opacity-80"
+              style={`border-color: ${onColorBorder}`}
             >
               Ligar: {biz.phone}
             </a>

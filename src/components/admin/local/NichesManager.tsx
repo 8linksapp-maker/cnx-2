@@ -111,7 +111,7 @@ export default function NichesManager() {
         const name = tempName.trim();
         const slug = (tempSlug.trim() || slugify(name)).replace(/^-|-$/g, '');
         if (!name) { setModalError('Digite o nome do nicho.'); return; }
-        if (!slug) { setModalError('A identificação (slug) é obrigatória.'); return; }
+        if (!slug) { setModalError('Dê uma identificação pra esse nicho.'); return; }
         if (!/^#[0-9a-fA-F]{6}$/.test(tempColor)) { setModalError('Escolha uma cor válida.'); return; }
 
         const collision = niches.find((n, i) => i !== editingIndex && (n.name === name || n.slug === slug));
@@ -180,7 +180,7 @@ export default function NichesManager() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-bold text-ink truncate">{n.name}</p>
-                                        <p className="text-[11px] font-mono text-ink-faint truncate">{n.color} · {n.slug}</p>
+                                        <p className="text-[11px] font-mono text-ink-faint truncate">/{n.slug}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
