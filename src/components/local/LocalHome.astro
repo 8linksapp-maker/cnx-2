@@ -7,89 +7,30 @@
  *   quem somos (c/ card de atendimento) → onde atendemos (links SEO) → contato + mapa →
  *   faixa de CTA final. Fundos alternam (surface/bg/elev) pra dar ritmo e profundidade.
  * Header/rodapé vêm do BaseLayout. Astro puro, zero React no público.
+ *
+ * DADOS: toda a leitura/derivação vem de lib/localHomeData.ts (dono: Francis).
+ * Este arquivo é só markup/visual (dono: Leonardo). Aceita `preview` p/ a prévia
+ * ao vivo do admin (rascunho não-salvo).
  */
-import { readData } from '../../lib/readData';
+import { loadHomeData, type HomePreview } from '../../lib/localHomeData';
 import { pickInk } from '../../lib/contrastInk';
-import { applyTemplateVars } from '../../lib/localVars';
-import type { Niche, Service, Location, LocalBusiness, LocalTemplate } from '../../lib/localTypes';
 
-const services = readData<Service[]>('services.json', []).filter((s) => s.active !== false);
-const locations = readData<Location[]>('locations.json', []);
-const niches = readData<Niche[]>('nichos.json', []);
-const biz = readData<LocalBusiness>('localBusiness.json', {} as LocalBusiness);
-const tpl = readData<LocalTemplate>('localTemplate.json', {});
-const siteConfig = readData('siteConfig.json');
+interface Props { preview?: HomePreview }
+const { preview } = Astro.props as Props;
 
-const builtLocations = locations.filter((l) => l.active !== false || l.type === 'cidade');
-// Localidade principal pros links dos serviços: prefere uma cidade ativa, senão a primeira publicável.
-const principalLoc =
-  builtLocations.find((l) => l.type === 'cidade') || builtLocations[0] || null;
-const cities = builtLocations.filter((l) => l.type === 'cidade');
-const region = principalLoc?.name || cities[0]?.name || '';
+const d = loadHomeData(preview);
+const {
+  services, builtLocations, region, nicheOf, company, cities,
+  heroColor, heroImg, heroInk, heroInitial, accent, accentInk,
+  waUrl, phoneHref, biz, heroTitle, heroSubtitle, aboutParas,
+  trust, benefits, steps, labels, show, ctaTitle, ctaSubtitle,
+  embedSrc, serviceHref, empty,
+} = d;
 
-// Hero: drenado na cor do nicho principal (customizável) ou foto de fundo (quando houver).
-const heroColor = services[0]?.color || niches.find((n) => n.slug === services[0]?.niche)?.color || niches[0]?.color || '#8b4a36';
-const heroImg = biz.heroImage || '';
-const heroInk = heroImg ? 'rgb(248 248 246)' : pickInk(heroColor).color;
-const heroInitial = ((biz.companyName || siteConfig.name || 'A').trim()[0] || 'A').toUpperCase();
-
-// A cor do site = cor do nicho (customizável). Vira o accent de tudo (hero, CTA, detalhes).
 const rgba = (hex: string, a: number) => {
   const h = hex.replace('#', '');
   return `rgba(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}, ${a})`;
 };
-const accent = heroColor;
-const accentInk = pickInk(accent).color;
-
-const nicheOf = (slug: string) => niches.find((n) => n.slug === slug);
-const company = biz.companyName || siteConfig.name || 'Minha Empresa';
-
-const waNumber = (biz.whatsapp || '').replace(/\D/g, '');
-const waUrl = waNumber
-  ? `https://wa.me/${waNumber}?text=${encodeURIComponent(biz.whatsappMessage || 'Olá! Vim pelo site e gostaria de um orçamento.')}`
-  : '';
-const phoneHref = biz.phone ? `tel:${biz.phone.replace(/[^\d+]/g, '')}` : '';
-
-const serviceHref = (svc: Service) => (principalLoc ? `/${principalLoc.slug}/${svc.slug}` : '#');
-const empty = services.length === 0 || builtLocations.length === 0;
-
-const heroTitle = biz.homeTitle || siteConfig.description || `${company}: atendimento profissional perto de você.`;
-const heroSubtitle = biz.homeSubtitle || '';
-const aboutParas = (biz.aboutText || '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-
-// Benefícios vêm do modelo de página (parametrizados); na home resolvemos pra cidade principal.
-const homeVars: Record<string, string> = {
-  cidade: region || 'sua região',
-  estado: principalLoc?.state || '',
-  bairro: region,
-  servico: services[0]?.title || 'nossos serviços',
-  empresa: company,
-  telefone: biz.phone || '',
-};
-const benefits = (tpl.benefits || []).map((b) => applyTemplateVars(b, homeVars)).filter(Boolean);
-
-const trust = [
-  'Orçamento sem compromisso',
-  region ? `Atendemos ${region} e região` : 'Atendimento na sua região',
-  'Resposta rápida no WhatsApp',
-];
-
-const steps = [
-  { n: '1', t: 'Você pede o orçamento', d: 'Fale com a gente pelo WhatsApp ou telefone e conte o que você precisa.' },
-  { n: '2', t: 'A gente combina tudo', d: 'Confirmamos prazo, valor e detalhes, sem compromisso nenhum.' },
-  { n: '3', t: 'Atendemos você', d: region ? `Atendimento em ${region} e região, no horário combinado.` : 'Atendimento na sua região, no horário combinado.' },
-];
-
-// Extrai o src do embed do Google Maps (aceita URL pura ou o <iframe> colado).
-function mapSrc(raw?: string): string {
-  if (!raw) return '';
-  const m = raw.match(/src="([^"]+)"/);
-  const url = (m ? m[1] : raw).trim();
-  return /^https:\/\/(www\.)?(google\.[^/]+\/maps\/embed|maps\.google\.)/.test(url) || /google\.[^/]+\/maps\?/.test(url)
-    ? url
-    : '';
-}
-const embedSrc = mapSrc(biz.mapEmbed);
 ---
 
 <!-- HERO — drenado na cor do nicho (ou foto de fundo) + glifo de background -->
@@ -129,14 +70,16 @@ const embedSrc = mapSrc(biz.mapEmbed);
         )}
       </div>
     )}
-    <ul class="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 mt-9 text-sm opacity-90">
-      {trust.map((t) => (
-        <li class="inline-flex items-center gap-2">
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
-          {t}
-        </li>
-      ))}
-    </ul>
+    {show('trust') && trust.length > 0 && (
+      <ul class="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 mt-9 text-sm opacity-90">
+        {trust.map((t) => (
+          <li class="inline-flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+            {t}
+          </li>
+        ))}
+      </ul>
+    )}
   </div>
 </section>
 
@@ -152,8 +95,8 @@ const embedSrc = mapSrc(biz.mapEmbed);
   </div>
 ) : (
   <>
-    <!-- BENEFÍCIOS — provas curtas (vêm do modelo de página) -->
-    {benefits.length > 0 && (
+    <!-- BENEFÍCIOS — provas curtas -->
+    {show('benefits') && benefits.length > 0 && (
       <section class="border-b border-rule">
         <div class="container-x py-10 md:py-12">
           <ul class="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
@@ -174,8 +117,8 @@ const embedSrc = mapSrc(biz.mapEmbed);
     <section id="servicos" class="bg-surface border-b border-rule scroll-mt-24">
       <div class="container-x py-12 md:py-16">
         <div class="text-center mb-8 md:mb-10">
-          <p class="mono uppercase text-ink-faint mb-2">o que fazemos</p>
-          <h2 class="font-display text-2xl md:text-3xl text-ink">Nossos serviços</h2>
+          <p class="mono uppercase text-ink-faint mb-2">{labels.servicos.eyebrow}</p>
+          <h2 class="font-display text-2xl md:text-3xl text-ink">{labels.servicos.title}</h2>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {services.map((svc) => {
@@ -208,28 +151,30 @@ const embedSrc = mapSrc(biz.mapEmbed);
     </section>
 
     <!-- COMO FUNCIONA — 3 passos -->
-    <section class="relative isolate overflow-hidden bg-elev border-b border-rule">
-      <span aria-hidden="true" class="pointer-events-none absolute -left-20 -top-20 w-80 h-80 rounded-full border-[3.5rem]" style={`border-color: ${heroColor}; opacity: 0.07;`}></span>
-      <span aria-hidden="true" class="pointer-events-none absolute right-[-6rem] bottom-[-4rem] w-64 h-64 rounded-full" style={`background-color: ${heroColor}; opacity: 0.05;`}></span>
-      <div class="container-x py-12 md:py-16 relative">
-        <div class="text-center mb-8 md:mb-10">
-          <p class="mono uppercase text-ink-faint mb-2">simples assim</p>
-          <h2 class="font-display text-2xl md:text-3xl text-ink">Como funciona</h2>
+    {show('comoFunciona') && (
+      <section class="relative isolate overflow-hidden bg-elev border-b border-rule">
+        <span aria-hidden="true" class="pointer-events-none absolute -left-20 -top-20 w-80 h-80 rounded-full border-[3.5rem]" style={`border-color: ${heroColor}; opacity: 0.07;`}></span>
+        <span aria-hidden="true" class="pointer-events-none absolute right-[-6rem] bottom-[-4rem] w-64 h-64 rounded-full" style={`background-color: ${heroColor}; opacity: 0.05;`}></span>
+        <div class="container-x py-12 md:py-16 relative">
+          <div class="text-center mb-8 md:mb-10">
+            <p class="mono uppercase text-ink-faint mb-2">{labels.comoFunciona.eyebrow}</p>
+            <h2 class="font-display text-2xl md:text-3xl text-ink">{labels.comoFunciona.title}</h2>
+          </div>
+          <ol class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+            {steps.map((s) => (
+              <li>
+                <span class="font-display text-5xl leading-none" style={`color: ${rgba(accent, 0.32)}`} aria-hidden="true">{s.n}</span>
+                <h3 class="text-lg font-semibold text-ink mt-3 mb-1.5">{s.t}</h3>
+                <p class="text-ink-muted leading-relaxed">{s.d}</p>
+              </li>
+            ))}
+          </ol>
         </div>
-        <ol class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-          {steps.map((s) => (
-            <li>
-              <span class="font-display text-5xl leading-none" style={`color: ${rgba(accent, 0.32)}`} aria-hidden="true">{s.n}</span>
-              <h3 class="text-lg font-semibold text-ink mt-3 mb-1.5">{s.t}</h3>
-              <p class="text-ink-muted leading-relaxed">{s.d}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
+      </section>
+    )}
 
     <!-- QUEM SOMOS — prosa + card de atendimento -->
-    {(biz.aboutTitle || aboutParas.length > 0) && (
+    {show('quemSomos') && (biz.aboutTitle || aboutParas.length > 0) && (
       <section id="quem-somos" class="bg-surface border-b border-rule scroll-mt-24">
         <div class="container-x py-12 md:py-16">
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
@@ -276,11 +221,11 @@ const embedSrc = mapSrc(biz.mapEmbed);
     )}
 
     <!-- ONDE ATENDEMOS — links internos (SEO programático) -->
-    {builtLocations.length > 0 && (
+    {show('ondeAtendemos') && builtLocations.length > 0 && (
       <section class="border-b border-rule">
         <div class="container-x py-12 md:py-16">
-          <p class="mono uppercase text-ink-faint mb-2">onde atendemos</p>
-          <h2 class="font-display text-2xl md:text-3xl text-ink mb-6">Áreas de atendimento</h2>
+          <p class="mono uppercase text-ink-faint mb-2">{labels.ondeAtendemos.eyebrow}</p>
+          <h2 class="font-display text-2xl md:text-3xl text-ink mb-6">{labels.ondeAtendemos.title}</h2>
           <ul class="flex flex-wrap gap-2">
             {builtLocations.map((loc) => (
               <li>
@@ -296,82 +241,84 @@ const embedSrc = mapSrc(biz.mapEmbed);
     )}
 
     <!-- CONTATO + MAPA -->
-    <section id="contato" class="bg-surface border-b border-rule scroll-mt-24">
-      <div class="container-x py-12 md:py-16">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          <div>
-            <p class="mono uppercase text-ink-faint mb-2">fale com a gente</p>
-            <h2 class="font-display text-2xl md:text-3xl text-ink mb-6">Contato</h2>
-            <dl class="space-y-4">
-              {biz.address && (
-                <div>
-                  <dt class="mono uppercase text-xs text-ink-faint mb-1">Endereço</dt>
-                  <dd class="text-ink">{biz.address}</dd>
-                </div>
-              )}
-              {biz.hours && (
-                <div>
-                  <dt class="mono uppercase text-xs text-ink-faint mb-1">Horário</dt>
-                  <dd class="text-ink">{biz.hours}</dd>
-                </div>
-              )}
-              {biz.phone && (
-                <div>
-                  <dt class="mono uppercase text-xs text-ink-faint mb-1">Telefone</dt>
-                  <dd><a href={phoneHref} class="text-ink hover:text-primary transition-colors no-underline">{biz.phone}</a></dd>
-                </div>
-              )}
-            </dl>
-            {(waUrl || phoneHref) && (
-              <div class="flex flex-wrap gap-3 mt-7">
-                {waUrl && (
-                  <a href={waUrl} target="_blank" rel="noopener noreferrer"
-                    class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded font-semibold no-underline hover:brightness-90 transition-[filter]"
-                    style={`background-color: ${accent}; color: ${accentInk}`}>
-                    Falar no WhatsApp
-                  </a>
+    {show('contato') && (
+      <section id="contato" class="bg-surface border-b border-rule scroll-mt-24">
+        <div class="container-x py-12 md:py-16">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            <div>
+              <p class="mono uppercase text-ink-faint mb-2">{labels.contato.eyebrow}</p>
+              <h2 class="font-display text-2xl md:text-3xl text-ink mb-6">{labels.contato.title}</h2>
+              <dl class="space-y-4">
+                {biz.address && (
+                  <div>
+                    <dt class="mono uppercase text-xs text-ink-faint mb-1">Endereço</dt>
+                    <dd class="text-ink">{biz.address}</dd>
+                  </div>
                 )}
-                {phoneHref && (
-                  <a href={phoneHref}
-                    class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors">
-                    Ligar agora
-                  </a>
+                {biz.hours && (
+                  <div>
+                    <dt class="mono uppercase text-xs text-ink-faint mb-1">Horário</dt>
+                    <dd class="text-ink">{biz.hours}</dd>
+                  </div>
                 )}
-              </div>
-            )}
-          </div>
+                {biz.phone && (
+                  <div>
+                    <dt class="mono uppercase text-xs text-ink-faint mb-1">Telefone</dt>
+                    <dd><a href={phoneHref} class="text-ink hover:text-primary transition-colors no-underline">{biz.phone}</a></dd>
+                  </div>
+                )}
+              </dl>
+              {(waUrl || phoneHref) && (
+                <div class="flex flex-wrap gap-3 mt-7">
+                  {waUrl && (
+                    <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                      class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded font-semibold no-underline hover:brightness-90 transition-[filter]"
+                      style={`background-color: ${accent}; color: ${accentInk}`}>
+                      Falar no WhatsApp
+                    </a>
+                  )}
+                  {phoneHref && (
+                    <a href={phoneHref}
+                      class="inline-flex items-center justify-center min-h-[44px] px-6 py-3 rounded border border-border text-ink font-semibold no-underline hover:border-ink transition-colors">
+                      Ligar agora
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
 
-          <div>
-            {embedSrc ? (
-              <iframe
-                src={embedSrc}
-                title={`Localização de ${company} no mapa`}
-                class="w-full h-72 lg:h-full min-h-[18rem] rounded-md border border-border"
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade"
-                allowfullscreen
-              ></iframe>
-            ) : (
-              <div class="w-full h-72 rounded-md border border-dashed border-border bg-elev flex items-center justify-center text-center p-6">
-                <p class="text-sm text-ink-faint">
-                  O mapa aparece aqui quando você colar o link de incorporação do Google Maps em
-                  <span class="text-ink-muted"> Site Local → Modelo de página</span>.
-                </p>
-              </div>
-            )}
+            <div>
+              {embedSrc ? (
+                <iframe
+                  src={embedSrc}
+                  title={`Localização de ${company} no mapa`}
+                  class="w-full h-72 lg:h-full min-h-[18rem] rounded-md border border-border"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                  allowfullscreen
+                ></iframe>
+              ) : (
+                <div class="w-full h-72 rounded-md border border-dashed border-border bg-elev flex items-center justify-center text-center p-6">
+                  <p class="text-sm text-ink-faint">
+                    O mapa aparece aqui quando você colar o link do Google Maps em
+                    <span class="text-ink-muted"> Minha empresa</span>.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    )}
 
     <!-- CTA FINAL -->
-    {(waUrl || phoneHref) && (
+    {show('ctaFinal') && (waUrl || phoneHref) && (
       <section style={`background-color: ${accent}; color: ${accentInk};`}>
         <div class="container-x py-14 md:py-20 text-center">
           <h2 class="font-display text-2xl md:text-3xl max-w-2xl mx-auto leading-snug" style="color: inherit;">
-            {services[0] ? `Precisa de ${services[0].title.toLowerCase()}?` : 'Precisa de um orçamento?'}
+            {ctaTitle}
           </h2>
-          <p class="opacity-80 mt-3 max-w-xl mx-auto">Fale agora e receba um orçamento sem compromisso.</p>
+          <p class="opacity-80 mt-3 max-w-xl mx-auto">{ctaSubtitle}</p>
           <div class="flex flex-wrap gap-3 mt-8 justify-center">
             {waUrl && (
               <a href={waUrl} target="_blank" rel="noopener noreferrer"

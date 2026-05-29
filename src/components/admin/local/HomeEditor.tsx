@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, Loader2, Plus, Trash2, Save, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { AlertCircle, Loader2, Plus, Trash2, Save, Eye, EyeOff, Monitor } from 'lucide-react';
 import { triggerToast } from '../CmsToaster';
 import { githubApi, atomicCommitApi } from '../../../lib/adminApi';
 import VariableField, { type VarDef } from './VariableField';
@@ -22,6 +22,8 @@ export default function HomeEditor() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [showPreview, setShowPreview] = useState(true);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
         Promise.all([
@@ -37,6 +39,20 @@ export default function HomeEditor() {
             .catch(err => setError(err.message))
             .finally(() => setLoading(false));
     }, []);
+
+    // Prévia ao vivo: manda o rascunho ({biz, home}) pra rota /admin/local/preview
+    // (base64 no query), com debounce pra não recarregar a cada tecla.
+    useEffect(() => {
+        if (loading || !showPreview) return;
+        const t = setTimeout(() => {
+            try {
+                const json = JSON.stringify({ biz, home });
+                const b64 = btoa(unescape(encodeURIComponent(json)));
+                if (iframeRef.current) iframeRef.current.src = `/admin/local/preview?d=${b64}`;
+            } catch { /* payload grande/erro de encode — ignora */ }
+        }, 500);
+        return () => clearTimeout(t);
+    }, [biz, home, showPreview, loading]);
 
     const patch = (p: Partial<LocalHome>) => setHome(prev => ({ ...prev, ...p }));
     const patchBiz = (p: Partial<LocalBusiness>) => setBiz(prev => ({ ...prev, ...p }));
@@ -116,7 +132,19 @@ export default function HomeEditor() {
     );
 
     return (
-        <div className="space-y-6 pb-32">
+        <div>
+            <div className="sticky top-0 z-30 mb-4 py-2 bg-bg/90 backdrop-blur flex items-center justify-between gap-3 border-b border-border">
+                <button type="button" onClick={() => setShowPreview(p => !p)} className="inline-flex items-center gap-2 text-sm font-semibold text-ink-muted hover:text-ink px-3 py-2 min-h-[40px] rounded hover:bg-elev transition-colors">
+                    <Monitor className="w-4 h-4" aria-hidden="true" /> {showPreview ? 'Ocultar prévia' : 'Ver prévia'}
+                </button>
+                <button onClick={save} disabled={saving} className="bg-primary hover:brightness-90 disabled:opacity-50 text-surface px-6 py-2.5 min-h-[44px] rounded font-semibold flex items-center gap-2 transition-all">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Save className="w-4 h-4" aria-hidden="true" />}
+                    {saving ? 'Salvando…' : 'Salvar'}
+                </button>
+            </div>
+
+            <div className="flex flex-col xl:flex-row gap-6">
+                <div className="flex-1 min-w-0 space-y-6 pb-12">
             {error && <div role="alert" className="p-4 bg-red-50 text-red-700 rounded-md border border-red-200 text-sm"><AlertCircle className="w-4 h-4 inline mr-2 -mt-0.5" />{error}</div>}
 
             <div className="p-4 bg-elev rounded-md border border-border text-sm text-ink-muted">
@@ -261,11 +289,18 @@ export default function HomeEditor() {
                 </div>
             </section>
 
-            <div className="fixed bottom-0 left-64 right-0 bg-surface/90 backdrop-blur border-t border-border px-8 py-4 flex justify-end z-40">
-                <button onClick={save} disabled={saving} className="bg-primary hover:brightness-90 disabled:opacity-50 text-surface px-6 py-2.5 min-h-[44px] rounded font-semibold flex items-center gap-2 transition-all">
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Save className="w-4 h-4" aria-hidden="true" />}
-                    {saving ? 'Salvando…' : 'Salvar página inicial'}
-                </button>
+                </div>
+
+                {showPreview && (
+                    <aside className="xl:w-[460px] shrink-0">
+                        <div className="xl:sticky xl:top-20">
+                            <p className="text-[10px] font-bold text-ink-faint uppercase tracking-widest mb-2">Prévia ao vivo</p>
+                            <iframe ref={iframeRef} title="Prévia da página inicial" loading="lazy"
+                                className="w-full h-[70vh] xl:h-[calc(100vh-9rem)] rounded-md border border-border bg-surface" />
+                            <p className="text-[10px] text-ink-faint mt-2">Mostra seu rascunho (ainda não publicado). Atualiza enquanto você edita.</p>
+                        </div>
+                    </aside>
+                )}
             </div>
         </div>
     );

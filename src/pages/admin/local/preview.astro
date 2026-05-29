@@ -1,0 +1,25 @@
+---
+/**
+ * /admin/local/preview — Prévia ao vivo da home com dados de RASCUNHO (não salvos).
+ *
+ * O HomeEditor manda o rascunho ({biz, home}) em base64 no query `d`; aqui a gente
+ * decodifica e passa pra LocalHome via prop `preview`. Renderiza a home REAL (mesmo
+ * componente do site), então a prévia é fiel. Protegida pelo middleware (/admin/*).
+ */
+export const prerender = false;
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import LocalHome from '../../../components/local/LocalHome.astro';
+
+let preview: any = undefined;
+const raw = Astro.url.searchParams.get('d');
+if (raw) {
+  try {
+    preview = JSON.parse(Buffer.from(raw, 'base64').toString('utf-8'));
+  } catch {
+    preview = undefined;
+  }
+}
+---
+<BaseLayout title="Prévia da página inicial">
+  <LocalHome preview={preview} />
+</BaseLayout>
