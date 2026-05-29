@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 152 40" role="img" aria-label="CNX 2.0">
+  <!-- Marca: tile terracota (paleta Café-da-Tarde) -->
+  <rect x="0" y="2" width="36" height="36" rx="9" fill="#8b4a36"/>
+  <!-- Barras ascendentes = ranking/crescimento (propósito do tema local) -->
+  <rect x="9"     y="22" width="4.5" height="8"  rx="2.25" fill="#f8f8f6"/>
+  <rect x="15.75" y="17" width="4.5" height="13" rx="2.25" fill="#f8f8f6"/>
+  <rect x="22.5"  y="11" width="4.5" height="19" rx="2.25" fill="#f8f8f6"/>
+  <!-- Wordmark -->
+  <text x="45" y="29" font-family="system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="-1" fill="#141418">CNX</text>
+  <!-- Selo de versão -->
+  <rect x="106" y="13" width="42" height="20" rx="10" fill="#8b4a36"/>
+  <text x="127" y="27.5" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#f8f8f6">2.0</text>
+</svg>

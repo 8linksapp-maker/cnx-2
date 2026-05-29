@@ -57,13 +57,10 @@ export default function AdminNav({ activeSection = '', extraItems = [] }: AdminN
             <div className="h-16 flex items-center px-5 border-b border-border">
                 <a
                     href="/admin"
-                    aria-label="Ir para o início do painel"
-                    className="flex items-center gap-2.5 no-underline"
+                    aria-label="CNX 2.0 — início do painel"
+                    className="flex items-center no-underline"
                 >
-                    <div className="w-7 h-7 bg-primary rounded flex items-center justify-center shrink-0" aria-hidden="true">
-                        <Home className="w-3.5 h-3.5 text-surface" />
-                    </div>
-                    <span className="font-semibold text-ink text-sm">Meu Painel</span>
+                    <img src="/cnx-logo.svg" alt="CNX 2.0" className="h-8 w-auto" />
                 </a>
             </div>
 
