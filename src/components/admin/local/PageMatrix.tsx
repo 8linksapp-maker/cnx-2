@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AlertCircle, Loader2, Check, Layers, LayoutGrid } from 'lucide-react';
+import { AlertCircle, Loader2, Check, Layers, LayoutGrid, ExternalLink, Search } from 'lucide-react';
 import { triggerToast } from '../CmsToaster';
 import { githubApi } from '../../../lib/adminApi';
 import type { Service, Location, Niche } from '../../../lib/localTypes';
@@ -18,6 +18,7 @@ export default function PageMatrix() {
     const [error, setError] = useState('');
     const [locQuery, setLocQuery] = useState('');
     const [nicheFilter, setNicheFilter] = useState('');
+    const [urlQuery, setUrlQuery] = useState('');
 
     useEffect(() => {
         Promise.all([
@@ -47,6 +48,23 @@ export default function PageMatrix() {
         return locations.map((l, i) => ({ l, i })).filter(({ l }) =>
             !q || l.name.toLowerCase().includes(q) || (l.city || '').toLowerCase().includes(q) || l.state.toLowerCase().includes(q));
     }, [locations, locQuery]);
+
+    // Todas as URLs que vão pro ar (serviço ativo × lugar publicável).
+    const allUrls = useMemo(() => {
+        const out: { path: string; svc: string; loc: string; state: string }[] = [];
+        for (const l of locations.filter(isBuilt)) {
+            for (const s of services.filter(x => x.active !== false)) {
+                out.push({ path: `/${l.slug}/${s.slug}`, svc: s.title, loc: l.name, state: l.state });
+            }
+        }
+        return out;
+    }, [services, locations]);
+    const filteredUrls = useMemo(() => {
+        const q = urlQuery.trim().toLowerCase();
+        if (!q) return allUrls;
+        return allUrls.filter(u => u.svc.toLowerCase().includes(q) || u.loc.toLowerCase().includes(q) || u.path.toLowerCase().includes(q));
+    }, [allUrls, urlQuery]);
+    const URL_CAP = 300;
 
     const saveServices = async (arr: Service[]) => {
         setSavingAxis('svc'); setError('');
@@ -121,6 +139,41 @@ export default function PageMatrix() {
                 </div>
             ) : (
                 <>
+                    {/* Suas páginas — lista clicável de todas as URLs geradas */}
+                    <div className="bg-surface border border-border rounded-lg p-5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                            <div>
+                                <h3 className="font-bold text-ink">Suas páginas</h3>
+                                <p className="text-xs text-ink-muted mt-0.5">{allUrls.length.toLocaleString('pt-BR')} página(s) no ar. Clique pra abrir.</p>
+                            </div>
+                            <div className="relative w-full sm:w-64">
+                                <Search className="w-4 h-4 text-ink-faint absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+                                <input type="search" value={urlQuery} onChange={e => setUrlQuery(e.target.value)} placeholder="Buscar página…" className="w-full bg-elev border border-border rounded-md pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none" aria-label="Buscar página" />
+                            </div>
+                        </div>
+                        {filteredUrls.length === 0 ? (
+                            <p className="text-sm text-ink-faint py-4 text-center">
+                                {allUrls.length === 0 ? 'Nenhuma página ativa. Ative serviços e lugares abaixo.' : `Nenhuma página encontrada para "${urlQuery}".`}
+                            </p>
+                        ) : (
+                            <ul className="divide-y divide-border max-h-80 overflow-y-auto border border-border rounded-md">
+                                {filteredUrls.slice(0, URL_CAP).map((u) => (
+                                    <li key={u.path}>
+                                        <a href={u.path} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-elev no-underline group">
+                                            <span className="min-w-0">
+                                                <span className="text-sm text-ink truncate block">{u.svc} <span className="text-ink-faint">em</span> {u.loc} <span className="text-ink-faint">· {u.state}</span></span>
+                                                <span className="font-mono text-[11px] text-ink-faint truncate block">{u.path}</span>
+                                            </span>
+                                            <span className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-60 group-hover:opacity-100 transition-opacity">abrir <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" /></span>
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        {filteredUrls.length > URL_CAP && <p className="text-[11px] text-ink-faint mt-2">Mostrando {URL_CAP} de {filteredUrls.length.toLocaleString('pt-BR')}. Use a busca pra achar uma específica.</p>}
+                        <p className="text-[11px] text-ink-faint mt-2">As páginas abrem no seu site. O que você acabou de mudar aparece depois de publicar.</p>
+                    </div>
+
                     {/* Controles por eixo */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {/* Serviços */}
