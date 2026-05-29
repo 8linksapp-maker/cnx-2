@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Upload, X, Image as ImageIcon, Search } from 'lucide-react';
 import { triggerToast } from '../CmsToaster';
 import { atomicCommitApi } from '../../../lib/adminApi';
 import { slugify } from '../../../lib/slugify';
@@ -17,6 +17,8 @@ interface Props {
     namePrefix: string;
     label?: string;
     hint?: string;
+    /** Se presente, mostra o botão "Buscar no Pexels" usando este termo. */
+    searchQuery?: string;
 }
 
 /**
@@ -25,12 +27,30 @@ interface Props {
  * imagem real cacheável, sem inflar o HTML (importa pra performance/SEO).
  * Mantém também um campo de URL como alternativa (colar endereço).
  */
-export default function ImageUploadField({ value, onChange, namePrefix, label, hint }: Props) {
+export default function ImageUploadField({ value, onChange, namePrefix, label, hint, searchQuery }: Props) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
+    const [searching, setSearching] = useState(false);
     const [localPreview, setLocalPreview] = useState('');
 
     const pick = () => inputRef.current?.click();
+
+    const searchPexels = async () => {
+        const q = (searchQuery || '').trim();
+        if (!q) return;
+        setSearching(true);
+        triggerToast('Buscando uma imagem...', 'progress', 30);
+        try {
+            const res = await fetch('/api/admin/local/pexels-image', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: q }),
+            });
+            const data = await res.json();
+            if (data.url) { onChange(data.url); triggerToast('Imagem encontrada!', 'success', 100); }
+            else triggerToast('Nenhuma imagem encontrada (confira a chave do Pexels em Plugins → IA).', 'error');
+        } catch {
+            triggerToast('Não foi possível buscar a imagem.', 'error');
+        } finally { setSearching(false); }
+    };
 
     const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -84,10 +104,16 @@ export default function ImageUploadField({ value, onChange, namePrefix, label, h
                 </button>
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={pick} disabled={uploading}
+                        <button type="button" onClick={pick} disabled={uploading || searching}
                             className="inline-flex items-center gap-1.5 text-xs font-semibold bg-primary-soft text-primary px-3 py-2 min-h-[36px] rounded hover:brightness-95 disabled:opacity-50 transition-all">
                             <Upload className="w-3.5 h-3.5" aria-hidden="true" /> {value ? 'Trocar imagem' : 'Enviar imagem'}
                         </button>
+                        {searchQuery && (
+                            <button type="button" onClick={searchPexels} disabled={uploading || searching}
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-elev text-ink px-3 py-2 min-h-[36px] rounded hover:bg-border/40 disabled:opacity-50 transition-all">
+                                {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Search className="w-3.5 h-3.5" aria-hidden="true" />} Buscar no Pexels
+                            </button>
+                        )}
                         {value && (
                             <button type="button" onClick={() => onChange('')} disabled={uploading}
                                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-faint hover:text-red-600 px-2 py-2 min-h-[36px] rounded transition-colors">

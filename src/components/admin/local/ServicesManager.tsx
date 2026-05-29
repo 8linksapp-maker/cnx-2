@@ -281,7 +281,7 @@ export default function ServicesManager() {
                                 </div>
                             </div>
 
-                            <ImageUploadField value={tempImage} onChange={setTempImage} namePrefix={tempSlug || tempTitle || 'servico'}
+                            <ImageUploadField value={tempImage} onChange={setTempImage} namePrefix={tempSlug || tempTitle || 'servico'} searchQuery={tempTitle}
                                 label="Imagem do serviço" hint="Aparece no card e no topo da página. Opcional — sem imagem, usa a cor + ícone." />
 
                             <div>

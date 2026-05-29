@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AlertCircle, Loader2, Check, ArrowRight, ArrowLeft, Wand2, Sparkles, ExternalLink, PartyPopper, Rocket } from 'lucide-react';
+import { AlertCircle, Loader2, Check, ArrowRight, ArrowLeft, Wand2, Sparkles, ExternalLink, PartyPopper, Rocket, Image as ImageIcon } from 'lucide-react';
 import { triggerToast } from '../CmsToaster';
 import { githubApi, atomicCommitApi } from '../../../lib/adminApi';
 import { slugify } from '../../../lib/slugify';
 import type { Service, Location, OutlineItem } from '../../../lib/localTypes';
 
-interface TemplateService { title: string; icon?: string; shortDescription?: string; outline?: OutlineItem[]; }
+interface TemplateService { title: string; icon?: string; shortDescription?: string; outline?: OutlineItem[]; pexelsQuery?: string; }
 interface NicheTemplate { slug: string; name: string; icon?: string; color: string; description?: string; services: TemplateService[]; }
 
 const STEPS = ['Nicho', 'Onde atende', 'Criar'];
@@ -22,6 +22,7 @@ export default function SiteWizard() {
     const [chosen, setChosen] = useState<NicheTemplate | null>(null);
     const [locText, setLocText] = useState('');
     const [genAI, setGenAI] = useState(true);
+    const [withImages, setWithImages] = useState(true);
 
     const [creating, setCreating] = useState(false);
     const [progress, setProgress] = useState('');
@@ -69,6 +70,19 @@ export default function SiteWizard() {
                 ...(s.shortDescription ? { shortDescription: s.shortDescription } : {}),
                 ...(s.outline?.length ? { outline: s.outline } : {}),
             }));
+
+            // Opcional: imagens automáticas do Pexels (1 chamada em lote).
+            if (withImages) {
+                setProgress('Buscando imagens…');
+                try {
+                    const queries = chosen.services.map(s => s.pexelsQuery || s.title);
+                    const res = await fetch('/api/admin/local/pexels-image', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries }),
+                    });
+                    const data = await res.json();
+                    if (Array.isArray(data.urls)) data.urls.forEach((u: string, i: number) => { if (u && services[i]) services[i].image = u; });
+                } catch { /* segue sem imagens */ }
+            }
 
             // Opcional: a IA escreve o texto de cada serviço.
             if (genAI) {
@@ -228,6 +242,13 @@ export default function SiteWizard() {
                         {existingSvc > 0 && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mt-4">Isso substitui os {existingSvc} serviço(s) e os lugares atuais.</p>}
                         {pageCount > 1500 && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mt-3">Acima de ~1.500 páginas o build fica pesado. Considere começar com menos lugares.</p>}
                     </div>
+                    <label className="flex items-start gap-3 cursor-pointer bg-surface border border-border rounded-lg p-4 mb-3">
+                        <input type="checkbox" checked={withImages} onChange={e => setWithImages(e.target.checked)} className="w-4 h-4 accent-primary mt-0.5" />
+                        <span>
+                            <span className="font-semibold text-ink flex items-center gap-1.5"><ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" /> Buscar imagens automáticas</span>
+                            <span className="block text-sm text-ink-muted mt-0.5">Pega uma foto do banco de imagens (Pexels) pra cada serviço. Precisa da chave do Pexels configurada em Plugins → IA; sem ela, o serviço usa cor + ícone.</span>
+                        </span>
+                    </label>
                     <label className="flex items-start gap-3 cursor-pointer bg-surface border border-border rounded-lg p-4 mb-6">
                         <input type="checkbox" checked={genAI} onChange={e => setGenAI(e.target.checked)} className="w-4 h-4 accent-primary mt-0.5" />
                         <span>
