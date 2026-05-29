@@ -103,10 +103,29 @@ export default function SiteWizard() {
                 }
             }
 
+            // Reseta a HOME pro novo nicho (senão o hero/quem-somos ficam do tema antigo).
+            // Preserva os dados de contato (nome, telefone, endereço, mapa…).
+            setProgress('Ajustando a página inicial…');
+            let biz: any = {};
+            try { biz = JSON.parse((await githubApi('read', 'src/data/localBusiness.json'))?.content || '{}'); } catch {}
+            const company = biz.companyName || 'Nossa empresa';
+            const principalCity = parsedLocs[0]?.name || 'sua região';
+            const nicheLower = chosen.name.toLowerCase();
+            const heroFromService = services.find(s => s.image)?.image || '';
+            const mergedBiz = {
+                ...biz,
+                homeTitle: `${chosen.name} em ${principalCity}`,
+                homeSubtitle: chosen.description || `Atendimento de ${nicheLower} com orçamento rápido e sem compromisso.`,
+                aboutTitle: 'Quem somos',
+                aboutText: `A ${company} é especializada em ${nicheLower} e atende ${principalCity} e região, com atendimento rápido e preço justo.\n\nFale com a gente e receba um orçamento sem compromisso.`,
+                heroImage: heroFromService, // foto do nicho quando há imagens; senão limpa → topo na cor do nicho
+            };
+
             setProgress('Publicando os dados...');
             await atomicCommitApi([
                 { path: 'src/data/services.json', content: JSON.stringify(services, null, 2) },
                 { path: 'src/data/locations.json', content: JSON.stringify(parsedLocs, null, 2) },
+                { path: 'src/data/localBusiness.json', content: JSON.stringify(mergedBiz, null, 2) },
             ], `CMS: cria site (${chosen.slug}, ${services.length}×${parsedLocs.length})`);
 
             const urls = parsedLocs.flatMap(l => services.map(s => ({
