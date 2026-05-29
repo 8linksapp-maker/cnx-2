@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import ServicesManager from '../../../components/admin/local/ServicesManager';
+---
+<AdminLayout title="Serviços" activeSection="local-services">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-ink">Serviços</h1>
+        <p class="text-ink-muted mt-1">Crie os serviços, monte a estrutura e gere o conteúdo com IA. Cada serviço vira uma página por cidade.</p>
+    </div>
+    <ServicesManager client:load />
+</AdminLayout>
