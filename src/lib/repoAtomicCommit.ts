@@ -7,7 +7,7 @@
 import fs from 'node:fs/promises';
 import nodePath from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readGithubEnv } from './serverEnv';
+import { readGithubEnv, getDefaultBranch } from './serverEnv';
 
 const PROJECT_ROOT = nodePath.resolve(fileURLToPath(import.meta.url), '../../../');
 
@@ -86,10 +86,12 @@ export async function atomicCommit(files: AtomicFile[], message: string): Promis
     return { path: f.path, mode: '100644' as const, type: 'blob' as const, content: f.content };
   });
 
+  const branch = await getDefaultBranch(env.owner, env.repo, env.token);
+
   // Uma tentativa = lê HEAD atual, monta tree em cima dela, commita, avança a ref.
   // Se a ref já mudou entre a leitura e o PATCH (HEAD se mexeu), tenta de novo.
   async function attempt(): Promise<string> {
-    const refRes = await ghFetch(`${base}/git/ref/heads/main`, env);
+    const refRes = await ghFetch(`${base}/git/ref/heads/${branch}`, env);
     if (!refRes.ok) throw new Error(`Falha ao buscar HEAD: ${refRes.status}`);
     const headCommitSha: string = (await refRes.json()).object.sha;
 
@@ -117,7 +119,7 @@ export async function atomicCommit(files: AtomicFile[], message: string): Promis
     }
     const newCommitSha: string = (await newCommitRes.json()).sha;
 
-    const updateRes = await ghFetch(`${base}/git/refs/heads/main`, env, {
+    const updateRes = await ghFetch(`${base}/git/refs/heads/${branch}`, env, {
       method: 'PATCH',
       body: JSON.stringify({ sha: newCommitSha }),
     });

@@ -7,7 +7,7 @@
 
 import type { APIRoute } from 'astro';
 import { validateSession } from '../../../lib/auth';
-import { readGithubEnv, readDeployHookUrl } from '../../../lib/serverEnv';
+import { readGithubEnv, readDeployHookUrl, getDefaultBranch } from '../../../lib/serverEnv';
 
 export const prerender = false;
 
@@ -46,7 +46,8 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     try {
-        const headRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/main`, { headers: ghHeaders(token) });
+        const branch = await getDefaultBranch(owner, repo, token);
+        const headRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/${branch}`, { headers: ghHeaders(token) });
         if (!headRes.ok) {
             return new Response(JSON.stringify({ hookConfigured, pendingCommits: 0, building: false }), { status: 200, headers: { 'Content-Type': 'application/json' } });
         }

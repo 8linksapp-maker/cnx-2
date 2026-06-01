@@ -26,3 +26,33 @@ export function readGithubEnv() {
 export function readDeployHookUrl(): string {
     return (process.env.DEPLOY_HOOK_URL ?? import.meta.env.DEPLOY_HOOK_URL ?? '').trim();
 }
+
+let cachedBranch: string | null = null;
+
+/**
+ * Resolve o branch default do repo (main, master, etc.) via GitHub API.
+ * Zero config — funciona com qualquer branch. Override opcional via GITHUB_BRANCH.
+ * Cacheado em memória (1 repo por deployment; a ref não muda em runtime).
+ *
+ * Necessário porque a Git Data API (refs/trees/commits, usada no commit
+ * atômico) exige branch explícito — diferente da Contents API, que cai no
+ * default sozinha. Repos criados com `master` quebravam com 'main' chumbado.
+ */
+export async function getDefaultBranch(owner: string, repo: string, token: string): Promise<string> {
+    const override = (process.env.GITHUB_BRANCH ?? import.meta.env.GITHUB_BRANCH ?? '').trim();
+    if (override) return override;
+    if (cachedBranch) return cachedBranch;
+    try {
+        const r = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+            headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+        });
+        if (r.ok) {
+            const d = await r.json();
+            if (d?.default_branch) {
+                cachedBranch = d.default_branch as string;
+                return cachedBranch;
+            }
+        }
+    } catch {}
+    return 'main';
+}
