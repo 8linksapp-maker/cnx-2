@@ -1,30 +1,31 @@
 {
-  "name": "Meu Blog",
-  "description": "Conteúdo direto sobre o que importa. Sem ornamento, sem ruído.",
-  "url": "https://meublog.com.br",
-  "author": "Equipe do Blog",
-  "language": "pt-BR",
-  "logo": "",
-  "theme": {
-    "primary": "#1c64c8",
-    "dark": "#0e1420",
-    "fontDisplay": "Switzer",
-    "fontBody": "Switzer"
-  },
-  "social": {
-    "instagram": "",
-    "twitter": "",
-    "facebook": "",
-    "youtube": ""
-  },
-  "contact": {
-    "email": "contato@meublog.com.br",
-    "phone": "",
-    "address": "",
-    "name": ""
-  },
-  "legal": {
-    "terms_last_updated": "",
-    "privacy_last_updated": ""
-  }
+    "name": "Meu Blog",
+    "description": "Conteúdo direto sobre o que importa. Sem ornamento, sem ruído.",
+    "url": "https://meublog.com.br",
+    "author": "Equipe do Blog",
+    "language": "pt-BR",
+    "logo": "",
+    "theme": {
+        "primary": "#1c64c8",
+        "dark": "#0e1420",
+        "fontDisplay": "Switzer",
+        "fontBody": "Switzer"
+    },
+    "social": {
+        "instagram": "",
+        "twitter": "",
+        "facebook": "",
+        "youtube": ""
+    },
+    "contact": {
+        "email": "contato@meublog.com.br",
+        "phone": "",
+        "address": "",
+        "name": ""
+    },
+    "legal": {
+        "terms_last_updated": "",
+        "privacy_last_updated": ""
+    },
+    "menuHoverEnabled": true
 }
