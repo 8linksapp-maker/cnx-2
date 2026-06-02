@@ -37,6 +37,7 @@ const tpl = readData<LocalTemplate>('localTemplate.json', {});
 const biz = readData<LocalBusiness>('localBusiness.json', {} as LocalBusiness);
 const allServices = readData<Service[]>('services.json', []).filter((s) => s.active !== false);
 const allLocations = readData<Location[]>('locations.json', []).filter((l) => l.active !== false || l.type === 'cidade');
+const home = readData('localHome.json', {}) as any;
 
 const nicheOf = (slug?: string) => niches.find((n) => n.slug === slug);
 const accent = svc.color || nicheOf(svc.niche)?.color || '#8b4a36';
@@ -66,11 +67,13 @@ const benefits = (tpl.benefits || []).map((b) => applyTemplateVars(b, vars)).fil
 const heroImg = svc.image || '';
 const heroText = heroImg ? 'rgb(248 248 246)' : accentInk;
 
-const trust = [
+// Provas de confiança: editáveis na Página inicial (localHome.trust); as variáveis
+// resolvem pra esta cidade. Fallback mantém o comportamento antigo.
+const trust = (home.trust && home.trust.length ? home.trust : [
   'Orçamento sem compromisso',
-  `Atendimento em ${loc.name}`,
+  'Atendemos {cidade} e região',
   'Resposta rápida no WhatsApp',
-];
+]).map((t: string) => applyTemplateVars(t, vars)).filter(Boolean);
 
 // Interlink de SEO.
 const otherServices = allServices.filter((s) => s.slug !== svc.slug).slice(0, 6);
@@ -289,7 +292,7 @@ const faqSchema = faqItems.length > 0 ? {
           <h2 class="font-display text-2xl md:text-3xl max-w-2xl mx-auto leading-snug" style="color: inherit;">
             Precisa de {svc.title.toLowerCase()} em {loc.name}?
           </h2>
-          <p class="opacity-80 mt-3 max-w-xl mx-auto">Fale agora e receba um orçamento sem compromisso.</p>
+          <p class="opacity-80 mt-3 max-w-xl mx-auto">{applyTemplateVars(home.ctaSubtitle || 'Fale agora e receba um orçamento sem compromisso.', vars)}</p>
           <div class="flex flex-wrap gap-3 mt-8 justify-center">
             {waUrl && (
               <a href={waUrl} target="_blank" rel="noopener noreferrer"

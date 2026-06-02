@@ -84,7 +84,13 @@ export function loadHomeData(preview?: HomePreview) {
     'Resposta rápida no WhatsApp',
   ]).map(av).filter(Boolean);
 
-  const benefits = (home.benefits || []).map(av).filter(Boolean);
+  // Fallback igual a trust/steps: evita a seção sumir quando o site é criado pelo
+  // wizard (que não semeia localHome.json). Editável em Página inicial.
+  const benefits = (home.benefits && home.benefits.length ? home.benefits : [
+    'Profissionais qualificados',
+    'Atendemos {cidade} e região',
+    'Compromisso com prazo e qualidade',
+  ]).map(av).filter(Boolean);
 
   const steps = (home.steps && home.steps.length ? home.steps : [
     { title: 'Você pede o orçamento', description: 'Fale com a gente pelo WhatsApp ou telefone e conte o que você precisa.' },
