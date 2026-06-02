@@ -5,5 +5,19 @@
     "state": "SP",
     "type": "bairro",
     "active": true
+  },
+  {
+    "name": "Pinheiro",
+    "slug": "pinheiro",
+    "state": "SP",
+    "type": "bairro",
+    "active": true
+  },
+  {
+    "name": "Santo André",
+    "slug": "santo-andre",
+    "state": "SP",
+    "type": "bairro",
+    "active": true
   }
 ]

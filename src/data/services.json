@@ -1,66 +1,41 @@
 [
   {
-    "title": "Instalação Elétrica",
-    "slug": "instalacao-eletrica",
-    "color": "#c49838",
-    "niche": "eletricista",
+    "title": "Abertura de Portas",
+    "slug": "abertura-de-portas",
+    "color": "#8c344c",
+    "niche": "chaveiro",
     "active": true,
-    "icon": "🔌",
-    "shortDescription": "Instalação elétrica completa para casas e comércios.",
+    "icon": "🚪",
+    "shortDescription": "Abertura de portas residenciais e comerciais sem danos.",
     "outline": [
       {
         "level": "h2",
-        "text": "O que está incluso"
-      },
-      {
-        "level": "h2",
-        "text": "Como funciona o serviço"
-      },
-      {
-        "level": "h2",
-        "text": "Segurança e garantia"
-      }
-    ],
-    "generatedContent": "## O que está incluso\n\nProcurando Instalação Elétrica em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como funciona o serviço\n\nProcurando Instalação Elétrica em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Segurança e garantia\n\nProcurando Instalação Elétrica em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
-    "contentGeneratedAt": "2026-05-29"
-  },
-  {
-    "title": "Troca de Disjuntor",
-    "slug": "troca-de-disjuntor",
-    "color": "#c49838",
-    "niche": "eletricista",
-    "active": true,
-    "icon": "⚡",
-    "shortDescription": "Troca e instalação de disjuntores com segurança.",
-    "outline": [
-      {
-        "level": "h2",
-        "text": "Quando trocar o disjuntor"
-      },
-      {
-        "level": "h2",
-        "text": "Como é feito"
+        "text": "Como abrimos sem danificar"
       },
       {
         "level": "h2",
         "text": "Atendimento rápido"
+      },
+      {
+        "level": "h2",
+        "text": "Quando chamar"
       }
     ],
-    "generatedContent": "## Quando trocar o disjuntor\n\nProcurando Troca de Disjuntor em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como é feito\n\nProcurando Troca de Disjuntor em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Atendimento rápido\n\nProcurando Troca de Disjuntor em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
-    "contentGeneratedAt": "2026-05-29"
+    "generatedContent": "## Como abrimos sem danificar\n\nProcurando Abertura de Portas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Atendimento rápido\n\nProcurando Abertura de Portas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Quando chamar\n\nProcurando Abertura de Portas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
+    "contentGeneratedAt": "2026-06-02"
   },
   {
-    "title": "Instalação de Tomadas",
-    "slug": "instalacao-de-tomadas",
-    "color": "#c49838",
-    "niche": "eletricista",
+    "title": "Cópia de Chaves",
+    "slug": "copia-de-chaves",
+    "color": "#8c344c",
+    "niche": "chaveiro",
     "active": true,
-    "icon": "🔋",
-    "shortDescription": "Instalação e troca de tomadas e interruptores.",
+    "icon": "🗝️",
+    "shortDescription": "Cópia de chaves comuns, codificadas e tetra.",
     "outline": [
       {
         "level": "h2",
-        "text": "Tipos de instalação"
+        "text": "Tipos de chave que copiamos"
       },
       {
         "level": "h2",
@@ -68,70 +43,95 @@
       },
       {
         "level": "h2",
-        "text": "Orçamento sem compromisso"
+        "text": "Prazo e preço"
       }
     ],
-    "generatedContent": "## Tipos de instalação\n\nProcurando Instalação de Tomadas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como funciona\n\nProcurando Instalação de Tomadas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Orçamento sem compromisso\n\nProcurando Instalação de Tomadas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
-    "contentGeneratedAt": "2026-05-29"
+    "generatedContent": "## Tipos de chave que copiamos\n\nProcurando Cópia de Chaves em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como funciona\n\nProcurando Cópia de Chaves em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Prazo e preço\n\nProcurando Cópia de Chaves em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
+    "contentGeneratedAt": "2026-06-02"
   },
   {
-    "title": "Quadro de Energia",
-    "slug": "quadro-de-energia",
-    "color": "#c49838",
-    "niche": "eletricista",
+    "title": "Troca de Fechadura",
+    "slug": "troca-de-fechadura",
+    "color": "#8c344c",
+    "niche": "chaveiro",
     "active": true,
-    "icon": "🗄️",
-    "shortDescription": "Montagem e revisão de quadro de distribuição de energia.",
+    "icon": "🔒",
+    "shortDescription": "Troca e instalação de fechaduras de todos os tipos.",
     "outline": [
       {
         "level": "h2",
-        "text": "Por que revisar o quadro"
+        "text": "Quando trocar a fechadura"
       },
       {
         "level": "h2",
-        "text": "Como é feito o serviço"
+        "text": "Modelos disponíveis"
       },
       {
         "level": "h2",
-        "text": "Segurança e norma"
+        "text": "Instalação no local"
       }
     ],
-    "generatedContent": "## Por que revisar o quadro\n\nProcurando Quadro de Energia em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como é feito o serviço\n\nProcurando Quadro de Energia em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Segurança e norma\n\nProcurando Quadro de Energia em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
-    "contentGeneratedAt": "2026-05-29"
+    "generatedContent": "## Quando trocar a fechadura\n\nProcurando Troca de Fechadura em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Modelos disponíveis\n\nProcurando Troca de Fechadura em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Instalação no local\n\nProcurando Troca de Fechadura em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
+    "contentGeneratedAt": "2026-06-02"
   },
   {
-    "title": "Aterramento",
-    "slug": "aterramento",
-    "color": "#c49838",
-    "niche": "eletricista",
+    "title": "Chave Codificada",
+    "slug": "chave-codificada",
+    "color": "#8c344c",
+    "niche": "chaveiro",
     "active": true,
-    "icon": "🌐",
-    "shortDescription": "Instalação de aterramento para proteção elétrica.",
+    "icon": "🔐",
+    "shortDescription": "Cópia e confecção de chave codificada automotiva.",
     "outline": [
       {
         "level": "h2",
-        "text": "Por que ter aterramento"
+        "text": "O que é chave codificada"
       },
       {
         "level": "h2",
-        "text": "Como funciona"
+        "text": "Como fazemos a cópia"
       },
       {
         "level": "h2",
         "text": "Atendimento"
       }
     ],
-    "generatedContent": "## Por que ter aterramento\n\nProcurando Aterramento em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como funciona\n\nProcurando Aterramento em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Atendimento\n\nProcurando Aterramento em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
-    "contentGeneratedAt": "2026-05-29"
+    "generatedContent": "## O que é chave codificada\n\nProcurando Chave Codificada em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como fazemos a cópia\n\nProcurando Chave Codificada em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Atendimento\n\nProcurando Chave Codificada em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
+    "contentGeneratedAt": "2026-06-02"
   },
   {
-    "title": "Eletricista 24 Horas",
-    "slug": "eletricista-24-horas",
-    "color": "#c49838",
-    "niche": "eletricista",
+    "title": "Abertura de Cofre",
+    "slug": "abertura-de-cofre",
+    "color": "#8c344c",
+    "niche": "chaveiro",
+    "active": true,
+    "icon": "🧰",
+    "shortDescription": "Abertura e manutenção de cofres com segurança.",
+    "outline": [
+      {
+        "level": "h2",
+        "text": "Tipos de cofre que abrimos"
+      },
+      {
+        "level": "h2",
+        "text": "Como funciona"
+      },
+      {
+        "level": "h2",
+        "text": "Atendimento discreto"
+      }
+    ],
+    "generatedContent": "## Tipos de cofre que abrimos\n\nProcurando Abertura de Cofre em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como funciona\n\nProcurando Abertura de Cofre em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Atendimento discreto\n\nProcurando Abertura de Cofre em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
+    "contentGeneratedAt": "2026-06-02"
+  },
+  {
+    "title": "Chaveiro 24 Horas",
+    "slug": "chaveiro-24-horas",
+    "color": "#8c344c",
+    "niche": "chaveiro",
     "active": true,
     "icon": "🕐",
-    "shortDescription": "Atendimento elétrico de emergência a qualquer hora.",
+    "shortDescription": "Chaveiro de emergência a qualquer hora do dia.",
     "outline": [
       {
         "level": "h2",
@@ -146,7 +146,7 @@
         "text": "Atendimento rápido"
       }
     ],
-    "generatedContent": "## Emergências que atendemos\n\nProcurando Eletricista 24 Horas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como chamar\n\nProcurando Eletricista 24 Horas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Atendimento rápido\n\nProcurando Eletricista 24 Horas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
-    "contentGeneratedAt": "2026-05-29"
+    "generatedContent": "## Emergências que atendemos\n\nProcurando Chaveiro 24 Horas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Como chamar\n\nProcurando Chaveiro 24 Horas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Atendimento rápido\n\nProcurando Chaveiro 24 Horas em {cidade}, {estado}? A {empresa} atende toda a região de {cidade}. Fale com a gente pelo telefone {telefone}.\n\n## Perguntas frequentes\n\n### Vocês atendem {cidade}?\n\nSim, a {empresa} atende {cidade} e região.\n\n### Como peço um orçamento?\n\nÉ só ligar para {telefone} ou chamar no WhatsApp.",
+    "contentGeneratedAt": "2026-06-02"
   }
 ]
