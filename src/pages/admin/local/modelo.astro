@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import LocalTemplateEditor from '../../../components/admin/local/LocalTemplateEditor';
+---
+<AdminLayout title="Modelo das páginas" activeSection="local-modelo">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-ink">Modelo das páginas de serviço</h1>
+        <p class="text-ink-muted mt-1">O hero, os benefícios e o SEO compartilhados por todas as páginas serviço × cidade. As variáveis viram o nome real em cada página.</p>
+    </div>
+    <LocalTemplateEditor client:load />
+</AdminLayout>

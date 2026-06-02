@@ -3,7 +3,7 @@ import {
     FileText, Tag, Users, Info, Phone,
     Shield, Settings, LogOut, ExternalLink, Navigation,
     Package, FileArchive, PenLine, ChevronRight, Home, Sparkles,
-    Wrench, MapPin, LayoutTemplate, Store, Rocket, Wand2,
+    Wrench, MapPin, LayoutTemplate, Store, Rocket, Wand2, Layers,
 } from 'lucide-react';
 
 interface NavItem {
@@ -21,6 +21,7 @@ const localItems: NavItem[] = [
     { label: 'Minha empresa', href: '/admin/local/empresa', icon: Store, section: 'local-empresa' },
     { label: 'Página inicial', href: '/admin/local/home', icon: LayoutTemplate, section: 'local-home' },
     { label: 'Serviços', href: '/admin/local/services', icon: Wrench, section: 'local-services' },
+    { label: 'Modelo das páginas', href: '/admin/local/modelo', icon: Layers, section: 'local-modelo' },
     { label: 'Onde atendemos', href: '/admin/local/locations', icon: MapPin, section: 'local-locations' },
     { label: 'Publicar', href: '/admin/local/pages', icon: Rocket, section: 'local-pages' },
 ];
