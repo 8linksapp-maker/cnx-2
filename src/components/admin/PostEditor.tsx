@@ -118,7 +118,8 @@ export default function PostEditor({ filePath }: PostEditorProps) {
 
     const [post, setPost] = useState({
         title: '', slug: '', description: '', pubDate: new Date().toISOString().split('T')[0],
-        heroImage: '', category: '', author: '', draft: false, content: ''
+        heroImage: '', category: '', author: '', draft: false, content: '',
+        videoUrl: '', videoPosition: 'after-hero', order: ''
     });
 
     // Load Quill dynamically
@@ -154,7 +155,8 @@ export default function PostEditor({ filePath }: PostEditorProps) {
                             title: extract('title'), slug: filePath.split('/').pop()?.replace('.md', '') || '',
                             description: extract('description'), pubDate: rawPubDate ? formatDateForInput(rawPubDate) : new Date().toISOString().split('T')[0],
                             heroImage: extract('heroImage'), category: extract('category') || 'Geral', author: extract('author'),
-                            draft: extract('draft') === 'true', content: parsedHtml
+                            draft: extract('draft') === 'true', content: parsedHtml,
+                            videoUrl: extract('videoUrl'), videoPosition: extract('videoPosition') || 'after-hero', order: extract('order')
                         });
                     } else {
                         setPost(p => ({ ...p, content: String(marked.parse(text)), slug: filePath.split('/').pop()?.replace('.md', '') || '' }));
@@ -233,7 +235,12 @@ export default function PostEditor({ filePath }: PostEditorProps) {
             } else if (/^\d{4}-\d{2}-\d{2}$/.test(post.pubDate)) {
                 finalPubDate = `${post.pubDate}T${new Date().toISOString().slice(11, 19)}.000Z`;
             }
-            const markdown = `---\ntitle: "${yamlEscape(post.title)}"\ndescription: "${yamlEscape(post.description)}"\npubDate: "${finalPubDate}"\nheroImage: "${yamlEscape(finalHeroImage)}"\ncategory: "${yamlEscape(post.category)}"\nauthor: "${yamlEscape(post.author)}"\ndraft: ${post.draft}\n---\n${finalHtmlContent}`;
+            const extraFm = [
+                post.videoUrl ? `videoUrl: "${yamlEscape(post.videoUrl)}"` : '',
+                post.videoUrl ? `videoPosition: "${post.videoPosition || 'after-hero'}"` : '',
+                (post.order !== '' && post.order != null) ? `order: ${Number(post.order) || 0}` : '',
+            ].filter(Boolean).join('\n');
+            const markdown = `---\ntitle: "${yamlEscape(post.title)}"\ndescription: "${yamlEscape(post.description)}"\npubDate: "${finalPubDate}"\nheroImage: "${yamlEscape(finalHeroImage)}"\ncategory: "${yamlEscape(post.category)}"\nauthor: "${yamlEscape(post.author)}"\ndraft: ${post.draft}${extraFm ? '\n' + extraFm : ''}\n---\n${finalHtmlContent}`;
             const targetPath = `src/content/blog/${post.slug}.md`;
             commitFiles.push({ path: targetPath, content: markdown });
 
@@ -498,6 +505,25 @@ export default function PostEditor({ filePath }: PostEditorProps) {
                                 ) : (
                                     <input type="text" value={post.author} onChange={e => setPost(p => ({ ...p, author: e.target.value }))} className={inputClass} placeholder="Nome do autor" />
                                 )}
+                            </div>
+                            <div>
+                                <label className={labelClass}>Vídeo no topo (URL)</label>
+                                <input type="url" value={post.videoUrl} onChange={e => setPost(p => ({ ...p, videoUrl: e.target.value }))} className={inputClass} placeholder="YouTube, Vimeo..." />
+                                <p className="text-[11px] text-ink-faint mt-1">Cole a URL pra exibir um vídeo no início do post.</p>
+                            </div>
+                            {post.videoUrl && (
+                                <div>
+                                    <label className={labelClass}>Posição do vídeo</label>
+                                    <select value={post.videoPosition} onChange={e => setPost(p => ({ ...p, videoPosition: e.target.value }))} className={inputClass}>
+                                        <option value="hero">No lugar da imagem de capa</option>
+                                        <option value="after-hero">Abaixo da capa</option>
+                                    </select>
+                                </div>
+                            )}
+                            <div>
+                                <label className={labelClass}>Número de destaque (opcional)</label>
+                                <input type="number" value={post.order} onChange={e => setPost(p => ({ ...p, order: e.target.value }))} className={inputClass} placeholder="Ex: 1" />
+                                <p className="text-[11px] text-ink-faint mt-1">Número grande decorativo no fundo do cabeçalho do post.</p>
                             </div>
                         </div>
                     </div>
