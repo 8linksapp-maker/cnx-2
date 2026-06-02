@@ -212,7 +212,8 @@ export default function ConfigEditor() {
                         )}
                         <div>
                             <label className={labelClass}>Combinação de Fontes</label>
-                            <select value={config?.theme?.font || 'outfit'} onChange={e => setConfig({ ...config, theme: { ...config.theme, font: e.target.value } })} className={inputClass}>
+                            <select value={config?.theme?.font || 'default'} onChange={e => setConfig({ ...config, theme: { ...config.theme, font: e.target.value } })} className={inputClass}>
+                                <option value="default">Fraunces & Karla (Padrão do tema)</option>
                                 <option value="inter">Inter & Roboto Mono (Moderno / Tech)</option>
                                 <option value="outfit">Outfit & Inter (Clean / SaaS)</option>
                                 <option value="roboto">Roboto & Open Sans (Corporativo / Neutro)</option>

@@ -20,6 +20,9 @@ const socials: Array<[string, string, string]> = [
   ['twitter', 'twitter / x', siteConfig.social?.twitter],
   ['facebook', 'facebook', siteConfig.social?.facebook],
   ['youtube', 'youtube', siteConfig.social?.youtube],
+  ['linkedin', 'linkedin', siteConfig.social?.linkedin],
+  ['github', 'github', siteConfig.social?.github],
+  ['pinterest', 'pinterest', siteConfig.social?.pinterest],
 ].filter(([_, __, href]: any) => href) as any;
 ---
 
@@ -31,7 +34,7 @@ const socials: Array<[string, string, string]> = [
           {siteConfig.name}
         </a>
         <p class="text-sm text-ink-muted leading-relaxed max-w-sm">
-          {siteConfig.description}
+          {siteConfig.footer?.description || siteConfig.description}
         </p>
       </div>
 
@@ -73,7 +76,7 @@ const socials: Array<[string, string, string]> = [
     </div>
 
     <div class="border-t border-rule pt-6 flex items-center justify-between flex-wrap gap-3 text-xs">
-      <span class="mono text-ink-faint">© {year} {siteConfig.name}</span>
+      <span class="mono text-ink-faint">© {year} {siteConfig.footer?.copyright || siteConfig.name}</span>
       <div class="flex gap-5">
         <a href="/privacidade" class="text-ink-faint hover:text-ink transition-colors">privacidade</a>
         <a href="/termos" class="text-ink-faint hover:text-ink transition-colors">termos</a>

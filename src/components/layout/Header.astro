@@ -22,6 +22,10 @@ const allCategories = registered.length > 0 ? [...registered, ...orphans] : orph
 
 const pathname = Astro.url.pathname;
 const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+// Abrir submenu de categorias ao passar o mouse (Configurações → Navegação).
+// Quando desligado, o submenu abre só no clique. O clique sempre funciona (a11y).
+const menuHover = siteConfig.menuHoverEnabled !== false;
 ---
 
 <header class="bg-bg/85 backdrop-blur-md text-ink sticky top-0 z-40 border-b border-rule">
@@ -37,9 +41,10 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
     <nav class="hidden lg:flex items-center gap-7 flex-1 justify-center" aria-label="Principal">
       {menuItems.map((item: any) => (
         item.showCategories ? (
-          <div class="relative group">
+          <div class="relative group" data-submenu>
             <button
               type="button"
+              data-submenu-toggle
               class={`text-sm font-medium transition-colors flex items-center gap-1 ${isActive(item.href) ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
               aria-haspopup="true"
               aria-expanded="false"
@@ -47,7 +52,7 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
               {item.label}
               <svg width="10" height="10" viewBox="0 0 10 10" class="opacity-60" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </button>
-            <ul class="absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-[200px] bg-elev border border-rule rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 z-50 shadow-[0_8px_24px_-12px_rgba(80,40,20,0.18)]">
+            <ul class={`submenu-panel absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-[200px] bg-elev border border-rule rounded-md opacity-0 invisible transition-all py-2 z-50 shadow-[0_8px_24px_-12px_rgba(80,40,20,0.18)] ${menuHover ? 'group-hover:opacity-100 group-hover:visible' : ''}`}>
               <li><a href={item.href} class="block px-4 py-2 text-sm text-ink hover:text-primary">Todos os artigos</a></li>
               {allCategories.map((cat) => (
                 <li><a href={`/categoria/${cat.slug}`} class="block px-4 py-2 text-sm text-ink hover:text-primary">{cat.name}</a></li>
@@ -111,6 +116,31 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
     </nav>
   </div>
 </header>
+
+<style>
+  /* Submenu aberto via clique (funciona com hover ligado ou desligado). */
+  [data-submenu].is-open > .submenu-panel { opacity: 1; visibility: visible; }
+</style>
+
+<script>
+  document.querySelectorAll('[data-submenu]').forEach((el) => {
+    const btn = el.querySelector('[data-submenu-toggle]');
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const open = el.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('[data-submenu].is-open').forEach((el) => {
+      if (!el.contains(e.target as Node)) {
+        el.classList.remove('is-open');
+        el.querySelector('[data-submenu-toggle]')?.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+</script>
 
 <script is:inline>
   (function() {

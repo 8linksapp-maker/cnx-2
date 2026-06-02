@@ -11,8 +11,19 @@ const pluginsConfig = readData('pluginsConfig.json', {});
 const gscVerificationTag = (pluginsConfig as any)?.searchConsole?.verificationTag?.trim() || '';
 
 const primaryHex = siteConfig.theme?.primary || '#1c64c8';
-const fontDisplay = siteConfig.theme?.fontDisplay || 'Switzer';
-const fontBody = siteConfig.theme?.fontBody || 'Switzer';
+// Combinações de fonte selecionáveis no admin (Configurações → Combinação de Fontes).
+// Cada combo carrega as famílias que precisa via <link> no <head> (default = fontes do tema, já no global.css).
+const FONT_MAP: Record<string, { display: string; body: string; href: string }> = {
+  default:    { display: 'Fraunces', body: 'Karla', href: '' },
+  inter:      { display: 'Inter', body: 'Inter', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' },
+  outfit:     { display: 'Outfit', body: 'Inter', href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap' },
+  roboto:     { display: 'Roboto', body: 'Open Sans', href: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600&display=swap' },
+  poppins:    { display: 'Poppins', body: 'Lora', href: 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500&display=swap' },
+  montserrat: { display: 'Montserrat', body: 'Merriweather', href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap' },
+  playfair:   { display: 'Playfair Display', body: 'Source Sans 3', href: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@400;600&display=swap' },
+  lora:       { display: 'Lora', body: 'Merriweather', href: 'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap' },
+};
+const font = FONT_MAP[siteConfig.theme?.font || 'default'] || FONT_MAP.default;
 
 function hexToRgbTriplet(hex: string): string {
   const h = hex.replace('#', '').trim();
@@ -34,8 +45,8 @@ function soften(hex: string): string {
 const cssVars = `
   --c-primary: ${hexToRgbTriplet(primaryHex)};
   --c-primary-soft: ${soften(primaryHex)};
-  --font-display: '${fontDisplay}', system-ui, -apple-system, sans-serif;
-  --font-body: '${fontBody}', system-ui, -apple-system, sans-serif;
+  --font-display: '${font.display}', Georgia, system-ui, sans-serif;
+  --font-body: '${font.body}', system-ui, -apple-system, sans-serif;
 `;
 
 interface Props {
@@ -46,15 +57,16 @@ interface Props {
   bodyClass?: string;
 }
 
+const defaultTitle = siteConfig.seo?.title || siteConfig.name;
 const {
-  title = siteConfig.name,
-  description = siteConfig.description,
+  title = defaultTitle,
+  description = siteConfig.seo?.description || siteConfig.description,
   image = '',
   type = 'website',
   bodyClass = '',
 } = Astro.props;
 
-const formattedTitle = title === siteConfig.name ? title : `${title} | ${siteConfig.name}`;
+const formattedTitle = title === defaultTitle ? title : `${title} | ${siteConfig.name}`;
 const siteUrl = siteConfig.url || Astro.url.origin;
 const socialImage = image?.startsWith('http') ? image : image ? new URL(image, siteUrl).toString() : '';
 ---
@@ -67,6 +79,7 @@ const socialImage = image?.startsWith('http') ? image : image ? new URL(image, s
   <title>{formattedTitle}</title>
   <meta name="description" content={description} />
   <link rel="icon" href={siteConfig.favicon || '/favicon.svg'} />
+  {font.href && <link rel="stylesheet" href={font.href} />}
 
   {gscVerificationTag && (
     gscVerificationTag.startsWith('<')
