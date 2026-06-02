@@ -28,7 +28,7 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
   <div class="container-x flex items-center justify-between h-[68px] gap-6">
     <a href="/" class="flex items-baseline gap-3 no-underline" aria-label="Home">
       {siteConfig.logo ? (
-        <img src={siteConfig.logo} alt={siteConfig.name} class="h-8 w-auto" />
+        <img src={siteConfig.logo} alt={siteConfig.name} style={`height: ${siteConfig.logoHeight ?? 40}px`} class="w-auto" />
       ) : (
         <span class="font-display text-lg font-bold text-ink tracking-tight">{siteConfig.name}</span>
       )}
