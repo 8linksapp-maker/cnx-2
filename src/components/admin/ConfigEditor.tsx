@@ -188,8 +188,6 @@ export default function ConfigEditor() {
                             {[
                                 { key: 'primary', label: 'Cor Primária' },
                                 { key: 'accent', label: 'Cor de Destaque' },
-                                { key: 'text', label: 'Cor do Texto' },
-                                { key: 'heading', label: 'Cor dos Títulos' },
                             ].map(f => (
                                 <div key={f.key}>
                                     <label className={labelClass}>{f.label}</label>

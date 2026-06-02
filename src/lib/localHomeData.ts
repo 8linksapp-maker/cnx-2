@@ -47,8 +47,10 @@ export function loadHomeData(preview?: HomePreview) {
   const nicheOf = (slug?: string) => niches.find((n) => n.slug === slug);
   const company = biz.companyName || siteConfig.name || 'Minha Empresa';
 
-  // Cor do site = cor do 1º serviço (ou nicho legado). Vira o accent de tudo.
-  const heroColor = services[0]?.color || nicheOf(services[0]?.niche)?.color || niches[0]?.color || '#8b4a36';
+  // Cor de marca do site. Prioridade: tema do admin (Destaque > Primária) → cor do
+  // 1º serviço/nicho (legado) → fallback. Vira o accent de tudo (hero, CTAs, páginas).
+  const themeBrand = siteConfig.theme?.accent || siteConfig.theme?.primary || '';
+  const heroColor = themeBrand || services[0]?.color || nicheOf(services[0]?.niche)?.color || niches[0]?.color || '#8b4a36';
   const heroImg = biz.heroImage || '';
   const heroInk = heroImg ? 'rgb(248 248 246)' : pickInk(heroColor).color;
   const heroInitial = ((biz.companyName || siteConfig.name || 'A').trim()[0] || 'A').toUpperCase();
