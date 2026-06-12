@@ -21,11 +21,18 @@ const { preview } = Astro.props as Props;
 const d = loadHomeData(preview);
 const {
   services, homeServices, builtLocations, region, nicheOf, company, cities,
-  heroColor, heroImg, heroInk, heroInitial, accent, accentInk,
+  heroColor, heroImg, heroInk, heroInitial, accent, accentInk, heroOverlay,
   waUrl, phoneHref, biz, heroTitle, heroSubtitle, aboutParas,
   trust, benefits, steps, labels, show, ctaTitle, ctaSubtitle, ctaButton,
   embedSrc, serviceHref, empty,
 } = d;
+
+// Gradient do overlay escuro: base = opacity do admin / 100; top suaviza, bottom intensifica
+// (mais legível na pessoa de WhatsApp/CTA no fundo). 0 = totalmente desligado.
+const overlayBase = heroOverlay.opacity / 100;
+const overlayTop = Math.max(0, overlayBase - 0.07).toFixed(3);
+const overlayBot = Math.min(0.95, overlayBase + 0.07).toFixed(3);
+const showHeroOverlay = !!heroImg && heroOverlay.enabled && heroOverlay.opacity > 0;
 
 const rgba = (hex: string, a: number) => {
   const h = hex.replace('#', '');
@@ -39,11 +46,14 @@ const rgba = (hex: string, a: number) => {
   style={`color: ${heroInk};${heroImg ? '' : ` background-color: ${heroColor};`}`}
 >
   {heroImg && <img src={heroImg} alt="" aria-hidden="true" class="absolute inset-0 -z-30 w-full h-full object-cover" />}
-  {/* Escurecida padrão: preta sobre a foto pro texto sobressair; drench colorido quando não há foto. */}
-  <div aria-hidden="true" class="absolute inset-0 -z-10"
-    style={heroImg
-      ? 'background: linear-gradient(180deg, rgb(10 10 12 / 0.70) 0%, rgb(10 10 12 / 0.84) 100%);'
-      : 'background-color: rgb(20 20 24 / 0.16);'}></div>
+  {/* Escurecida (configurável no admin) sobre a foto pro texto sobressair; drench colorido quando não há foto. */}
+  {showHeroOverlay && (
+    <div aria-hidden="true" class="absolute inset-0 -z-10"
+      style={`background: linear-gradient(180deg, rgb(10 10 12 / ${overlayTop}) 0%, rgb(10 10 12 / ${overlayBot}) 100%);`}></div>
+  )}
+  {!heroImg && (
+    <div aria-hidden="true" class="absolute inset-0 -z-10" style="background-color: rgb(20 20 24 / 0.16);"></div>
+  )}
   {!heroImg && (
     <span aria-hidden="true"
       class="pointer-events-none select-none absolute -right-6 md:-right-10 -bottom-20 md:-bottom-28 -z-10 font-display font-bold leading-none opacity-[0.10] text-[16rem] md:text-[28rem]">
